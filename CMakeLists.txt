@@ -28,7 +28,14 @@ target_include_directories(imgui PUBLIC
 target_link_libraries(imgui PUBLIC glfw)
 
 # Main executable
-add_executable(NaratteMiru src/main.cpp)
+add_executable(NaratteMiru
+        src/main.cpp
+        src/Miru.cpp
+        src/View.cpp
+)
+target_include_directories(NaratteMiru PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 target_link_libraries(NaratteMiru PUBLIC imgui glfw)
 
 # Linux: link OpenGL
