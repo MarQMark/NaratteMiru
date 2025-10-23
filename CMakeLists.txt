@@ -34,5 +34,17 @@ target_link_libraries(NaratteMiru PUBLIC imgui glfw)
 # Linux: link OpenGL
 if(UNIX AND NOT APPLE)
     find_package(OpenGL REQUIRED)
-    target_link_libraries(NaratteMiru PRIVATE OpenGL::GL)
+    find_package(X11 REQUIRED)
+
+    target_link_libraries(NaratteMiru PRIVATE
+            imgui
+            glfw
+            OpenGL::GL
+            X11
+            Xrandr
+            Xi
+            Xxf86vm
+            Xcursor
+    )
 endif()
+
