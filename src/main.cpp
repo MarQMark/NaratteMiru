@@ -2,7 +2,7 @@
 
 int main() {
 
-    const Miru miru;
+    Miru miru;
 
     while (miru.shouldRun())
         miru.update();

@@ -1,5 +1,6 @@
 #include "View.h"
 
+#include <ranges>
 #include <stdexcept>
 
 #include "imgui.h"
@@ -104,8 +105,9 @@ void View::render_dockspace(){
     bool show_demo_window = true;
     ImGui::ShowDemoWindow(&show_demo_window);
 
-    for (auto viewable : _viewables) {
-        viewable->render();
+    for (const auto &val: _viewables | std::views::values) {
+        if(val->isVisible())
+            val->render();
     }
 
     ImGui::End();
@@ -129,6 +131,16 @@ bool View::shouldRun() const {
     return !glfwWindowShouldClose(_window);
 }
 
-void View::addViewable(Viewable *viewable) {
-    _viewables.push_back(viewable);
+
+void View::addViewable(Viewable *viewable, const std::string& name) {
+    _viewables[name] = viewable;
+    viewable->view = this;
+}
+
+Viewable *View::getViewable(const std::string& name) {
+    if(_viewables.contains(name))
+        return _viewables[name];
+
+    printf("Viewable %s not found\n", name.c_str());
+    return nullptr;
 }
