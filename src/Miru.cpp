@@ -37,6 +37,12 @@ void Miru::update() {
         reload_lib();
     }
 
+    if(_ticks > 0) {
+        naratte_tick(_cpu, _ppu);
+        printf("%s\n", naratte_disassemble(_cpu, _dasm));
+        _ticks--;
+    }
+
     _view->render();
 }
 
@@ -51,17 +57,30 @@ void Miru::reload_lib() {
     _lib_handle = dlopen("lib_path.so", RTLD_LAZY);
     if (!_lib_handle) {
         fprintf(stderr, "Error: %s\n", dlerror());
+        return;
     }
-
-    printf("test\n");
 
     dlerror();
 
-    //dasm_init = reinterpret_cast<void (*)(void**)>(dlsym(_lib_handle, "dasm_init"));
-    //dasm_disassemble = reinterpret_cast<void (*)(void*, uint8_t*, uint16_t)>(dlsym(_lib_handle, "dasm_disassemble"));
+    naratte_init_d = reinterpret_cast<int8_t (*)(void**, void**, void**)>(dlsym(_lib_handle, "naratte_init_d"));
+    naratte_load_rom = reinterpret_cast<int8_t (*)(void*, const char*, const char*)>(dlsym(_lib_handle, "naratte_load_rom"));
+    naratte_tick = reinterpret_cast<void (*)(void*, void*)>(dlsym(_lib_handle, "naratte_tick"));
+    naratte_disassemble = reinterpret_cast<char* (*)(void*, void*)>(dlsym(_lib_handle, "naratte_disassemble"));
+    naratte_clean_d = reinterpret_cast<void (*)(void*, void*, void*)>(dlsym(_lib_handle, "naratte_clean_d"));
     const char* err = dlerror();
     if (err) {
         fprintf(stderr, "Symbol error: %s\n", err);
         dlclose(_lib_handle);
+        return;
+    }
+
+    if(!naratte_init_d(&_cpu, &_ppu, &_dasm)) {
+        fprintf(stderr, "Error init naratte debug\n");
+        return;
+    }
+
+    if(!naratte_load_rom(_cpu, "/home/nan/Downloads/cgb_boot.bin", "/home/nan/Downloads/mts-20240926-1737-443f6e1/acceptance/ppu/stat_lyc_onoff.gb")){
+        fprintf(stderr, "Error loading ROMs\n");
+        return;
     }
 }

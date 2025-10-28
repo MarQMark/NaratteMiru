@@ -27,6 +27,23 @@ private:
 
     void* _lib_handle{};
     void reload_lib();
+
+
+    void* _cpu{};
+    void* _ppu{};
+    void* _dasm{};
+    //int8_t (*naratte_init)(void** cpu, void** ppu){};
+    int8_t (*naratte_init_d)(void** cpu, void** ppu, void** dasm){};
+
+    int8_t (*naratte_load_rom)(void* cpu, const char* boot, const char* game);
+
+    void (*naratte_tick)(void* cpu, void* ppu){};
+    char* (*naratte_disassemble)(void* cpu, void* dasm){};
+
+    //void (*naratte_clean)(void* cpu, void* ppu){};
+    void (*naratte_clean_d)(void* cpu, void* ppu, void* dasm){};
+
+    int _ticks = 1000;
 };
 
 
