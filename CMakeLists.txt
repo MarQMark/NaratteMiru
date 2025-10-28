@@ -3,8 +3,6 @@ project(NaratteMiru)
 
 set(CMAKE_CXX_STANDARD 20)
 
-#add_executable(NaratteMiru src/main.cpp)
-
 # GLFW
 add_subdirectory(extern/glfw)
 
@@ -31,6 +29,7 @@ target_link_libraries(imgui PUBLIC glfw)
 add_executable(NaratteMiru
         src/main.cpp
         src/Miru.cpp
+        src/Naratte.cpp
         src/View.cpp
 
         src/views/AsmView.cpp
