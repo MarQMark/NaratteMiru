@@ -14,19 +14,44 @@ void MemoryView::render() {
     constexpr int mem_size = 0x10000;   // 64 KB
     constexpr int bytes_per_row = 16;
 
-    // Fixed pitch font helps alignment
+    // Store address input
+    static char input_addr_buf[8] = "0000";
+    static uint16_t scroll_to_addr = 0;
+    static bool do_scroll = false;
+
+    //---------------------------------------
+    // Address Jump Field
+    //---------------------------------------
+    ImGui::Text("Jump to:");
+    ImGui::SameLine();
+
+    ImGui::SetNextItemWidth(80);
+    ImGui::InputText("##addr", input_addr_buf, sizeof(input_addr_buf),
+                     ImGuiInputTextFlags_CharsHexadecimal |
+                     ImGuiInputTextFlags_CharsUppercase);
+
+    ImGui::SameLine();
+    if (ImGui::Button("Jump"))
+    {
+        // Convert hex to address
+        scroll_to_addr = (uint16_t)strtol(input_addr_buf, NULL, 16);
+        do_scroll = true;
+    }
+
+    ImGui::Separator();
+
+    //---------------------------------------
+    // Memory Table
+    //---------------------------------------
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {2, 2});
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {2, 1});
     ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]); // optional
 
-    // Calculate total rows
     const int row_count = mem_size / bytes_per_row;
 
-    // Text width per byte (hex + space)
-    float char_width = ImGui::CalcTextSize("FF ").x;
-    float addr_width = ImGui::CalcTextSize("0000: ").x;
+    // Approx line height (text height)
+    float line_height = ImGui::GetTextLineHeightWithSpacing() + 3;
 
-    // Table
     if (ImGui::BeginTable("mem_table", 3,
         ImGuiTableFlags_ScrollY |
         ImGuiTableFlags_RowBg |
@@ -34,18 +59,20 @@ void MemoryView::render() {
         ImGuiTableFlags_BordersOuter |
         ImGuiTableFlags_Resizable))
     {
-        ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, addr_width);
-
-        // Hex bytes
-        ImGui::TableSetupColumn("Hex", ImGuiTableColumnFlags_WidthFixed,
-            char_width * bytes_per_row);
-
-        // ASCII side
-        ImGui::TableSetupColumn("ASCII", ImGuiTableColumnFlags_WidthStretch);
-
+        ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn("Hex",     ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn("ASCII",   ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
 
-        // Clip rows for performance
+        // Scroll handling: compute row index and target scroll position
+        if (do_scroll)
+        {
+            uint32_t row = scroll_to_addr / bytes_per_row;
+            float target_y = row * line_height;
+            ImGui::SetScrollY(target_y + 18);
+            do_scroll = false;
+        }
+
         ImGuiListClipper clipper;
         clipper.Begin(row_count);
 
@@ -69,7 +96,7 @@ void MemoryView::render() {
 
                     for (int i = 0; i < bytes_per_row; i++)
                     {
-                        const uint8_t value = _naratte->readPseudoMem(base_addr + i);
+                        uint8_t value = _naratte->readPseudoMem(base_addr + i);
                         out += sprintf(out, "%02X ", value);
                     }
                     ImGui::TextUnformatted(buf);
@@ -81,7 +108,7 @@ void MemoryView::render() {
                     char buf[bytes_per_row + 1];
                     for (int i = 0; i < bytes_per_row; i++)
                     {
-                        const uint8_t value = _naratte->readPseudoMem(base_addr + i);
+                        uint8_t value = _naratte->readPseudoMem(base_addr + i);
                         buf[i] = (value >= 32 && value < 127) ? value : '.';
                     }
                     buf[bytes_per_row] = 0;
@@ -92,9 +119,7 @@ void MemoryView::render() {
 
         ImGui::EndTable();
     }
-
     ImGui::PopFont();
     ImGui::PopStyleVar(2);
-
     ImGui::End();
 }

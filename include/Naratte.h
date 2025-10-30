@@ -6,7 +6,7 @@
 #include <vector>
 
 struct Instruction {
-    uint8_t op[3] = {0xFD, 0xFD, 0xFD}; // Invalid Opcodes
+    uint8_t op[4] = {0xFD, 0xFD, 0xFD}; // Invalid Opcodes
 };
 struct MemWrites {
     size_t idx = 0;
@@ -51,7 +51,7 @@ private:
     void (*naratte_tick)(void* cpu, void* ppu){};
 
     void (*naratte_get_ic)(void *cpu, uint8_t* ic){};
-    char* (*naratte_disassemble)(void* dasm, uint8_t *ins){};
+    char* (*naratte_disassemble)(void* dasm, uint8_t *ins, uint8_t* mcc){};
     char* (*naratte_disassemble_cpu)(void* cpu, void* dasm){};
 
     //void (*naratte_clean)(void* cpu, void* ppu){};

@@ -1,6 +1,7 @@
 #include "Naratte.h"
 
 #include <cstdio>
+#include <cstring>
 #include <dlfcn.h>
 
 Naratte::Naratte() {
@@ -34,7 +35,7 @@ void Naratte::reloadLib() {
     naratte_load_rom        = reinterpret_cast<int8_t (*)(void*, const char*, const char*)>(dlsym(_lib_handle, "naratte_load_rom"));
     naratte_tick            = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, "naratte_tick"));
     naratte_get_ic          = reinterpret_cast<void   (*)(void*, uint8_t*)>(dlsym(_lib_handle, "naratte_get_ic"));
-    naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*)>(dlsym(_lib_handle, "naratte_disassemble"));
+    naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*, uint8_t*)>(dlsym(_lib_handle, "naratte_disassemble"));
     naratte_disassemble_cpu = reinterpret_cast<char*  (*)(void*, void*)>(dlsym(_lib_handle, "naratte_disassemble_cpu"));
     naratte_clean_d         = reinterpret_cast<void   (*)(void*, void*, void*)>(dlsym(_lib_handle, "naratte_clean_d"));
 
@@ -85,7 +86,7 @@ std::vector<Instruction>& Naratte::getInstructions() {
 }
 
 char* Naratte::getInstructionName(uint8_t *ic) const {
-    return naratte_disassemble(_dasm, ic);
+    return naratte_disassemble(_dasm, ic, &ic[3]);
 }
 
 std::vector<MemWrites> & Naratte::getMemWrites() {

@@ -22,9 +22,27 @@ void AsmView::render() {
                 const bool is_selected = (_selected == i);
                 char label[128];
                 auto& instruction = _naratte->getInstructions()[i];
-                snprintf(label, sizeof(label), "%06d | %02X %02X %02X | %s",
-                         i, instruction.op[0], instruction.op[1],
-                         instruction.op[2], _naratte->getInstructionName(instruction.op));
+                char* name = _naratte->getInstructionName(instruction.op);
+
+                char op1[4], op2[4];
+                snprintf(op1, sizeof(op1), "%02X", instruction.op[0]);
+
+                // only if opcount ≥ 2, otherwise spaces
+                if (instruction.op[3] >= 2)
+                    snprintf(op2, sizeof(op2), "%02X", instruction.op[1]);
+                else
+                    snprintf(op2, sizeof(op2), "  ");
+
+                // only if opcount ≥ 3, otherwise spaces
+                char op3[4];
+                if (instruction.op[3] >= 3)
+                    snprintf(op3, sizeof(op3), "%02X", instruction.op[2]);
+                else
+                    snprintf(op3, sizeof(op3), "  ");
+
+                snprintf(label, sizeof(label), "%06d | %s %s %s | %s",
+                         i, op1, op2, op3, name);
+
                 if (ImGui::Selectable(label, is_selected))
                     _selected = i;
                 if (is_selected)
