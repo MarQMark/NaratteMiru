@@ -37,7 +37,7 @@ void ViewportView::render() {
         draw_width  = avail.y * tex_aspect;
     }
 
-    draw_height = draw_width = 255*2;
+    draw_height = draw_width = 255*1;
 
     // compute centered position
     ImVec2 cursor = ImGui::GetCursorScreenPos();
