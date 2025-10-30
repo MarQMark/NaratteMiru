@@ -59,8 +59,8 @@ void MemoryView::render() {
         ImGuiTableFlags_BordersOuter |
         ImGuiTableFlags_Resizable))
     {
-        ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed);
-        ImGui::TableSetupColumn("Hex",     ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn("Data",     ImGuiTableColumnFlags_WidthFixed);
         ImGui::TableSetupColumn("ASCII",   ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
 
@@ -96,6 +96,8 @@ void MemoryView::render() {
 
                     for (int i = 0; i < bytes_per_row; i++)
                     {
+                        if (i == 8)
+                            out += sprintf(out, " ");
                         uint8_t value = _naratte->readPseudoMem(base_addr + i);
                         out += sprintf(out, "%02X ", value);
                     }

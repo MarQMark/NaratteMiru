@@ -69,6 +69,7 @@ void Naratte::update() {
     for(int i = 0; i < 10000; i++) {
         _instructions.emplace_back(Instruction{{0x0, 0x0, 0x0}});
         naratte_get_ic(_cpu, _instructions.back().op);
+        memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
         naratte_tick(_cpu, _ppu);
 
         for (const mem_change* change = naratte_get_mc(_cpu); change != nullptr; change = change->next) {
@@ -105,6 +106,8 @@ void Naratte::reloadPseudoMem(const size_t iId) {
 
         mem_write(_pseudo_mem, addr, data);
     }
+
+    ((uint8_t*)_pseudo_mem)[98392] = 0;
 }
 
 uint8_t Naratte::readPseudoMem(const uint16_t addr) const {
@@ -113,4 +116,15 @@ uint8_t Naratte::readPseudoMem(const uint16_t addr) const {
 
 void* Naratte::getPseudoMem() const {
     return _pseudo_mem;
+}
+
+void Naratte::setSelected(const int selected) {
+    if (selected != _selected)
+        reloadPseudoMem(selected);
+
+    _selected = selected;
+}
+
+int Naratte::getSelected() const {
+    return _selected;
 }

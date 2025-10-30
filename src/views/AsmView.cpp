@@ -6,7 +6,6 @@ AsmView::AsmView(Naratte* naratte) : _naratte(naratte){
 }
 
 void AsmView::render() {
-    int oldSelected = _selected;
 
     if (_selected > _naratte->getInstructions().size())
         _selected = -1;
@@ -55,8 +54,7 @@ void AsmView::render() {
 
     ImGui::End();
 
-    if (oldSelected != _selected)
-        _naratte->reloadPseudoMem(_selected);
+    _naratte->setSelected(_selected);
 
     /*ImGui::Begin("Mem Writes");
 

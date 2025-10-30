@@ -7,6 +7,41 @@
 
 struct Instruction {
     uint8_t op[4] = {0xFD, 0xFD, 0xFD}; // Invalid Opcodes
+    struct sm83 {
+        uint8_t IME;
+        union {
+            uint16_t AF;
+            struct {
+                uint8_t F;  // Flags
+                uint8_t A;  // Accumulator
+            };
+        };
+
+        union {
+            uint16_t BC;
+            struct {
+                uint8_t C;
+                uint8_t B;
+            };
+        };
+        union {
+            uint16_t DE;
+            struct {
+                uint8_t E;
+                uint8_t D;
+            };
+        };
+        union {
+            uint16_t HL;
+            struct {
+                uint8_t L;
+                uint8_t H;
+            };
+        };
+
+        uint16_t PC; // Program Counter
+        uint16_t SP; // Stack Pointer
+    } cpu;
 };
 struct MemWrites {
     size_t idx = 0;
@@ -32,7 +67,12 @@ public:
     uint8_t readPseudoMem(uint16_t addr) const;
     void* getPseudoMem() const;
 
+    void setSelected(int selected);
+    int getSelected() const;
+
 private:
+    int _selected = -1;
+
     std::string _lib_path;
     std::string _boot_path;
     std::string _game_path;
