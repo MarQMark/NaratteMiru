@@ -10,7 +10,7 @@ Miru::Miru() {
     _asm_view = new AsmView(_naratte);
     _memory_view = new MemoryView(_naratte);
     _register_view = new RegisterView(_naratte);
-    _viewport_view = new ViewportView;
+    _viewport_view = new ViewportView(_naratte);
 
     _view->addViewable(_menubar, "Menubar");
     _view->addViewable(_asm_view, "Assembly");

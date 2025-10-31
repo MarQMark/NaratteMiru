@@ -70,14 +70,20 @@ public:
     void setSelected(int selected);
     int getSelected() const;
 
+    bool isDirty() const;
+    void resetDirty();
+
 private:
     int _selected = -1;
+    bool _dirty = false;
 
     std::string _lib_path;
     std::string _boot_path;
     std::string _game_path;
 
     void* _lib_handle{};
+
+    bool query_dl_error() const;
 
     void* _cpu{};
     void* _ppu{};
@@ -94,8 +100,7 @@ private:
     char* (*naratte_disassemble)(void* dasm, uint8_t *ins, uint8_t* mcc){};
     char* (*naratte_disassemble_cpu)(void* cpu, void* dasm){};
 
-    //void (*naratte_clean)(void* cpu, void* ppu){};
-    void (*naratte_clean_d)(void* cpu, void* ppu, void* dasm){};
+    void (*naratte_free_d)(void** cpu, void** ppu, void** dasm){};
 
     struct mem_change {
         struct mem_change* next;
@@ -104,8 +109,11 @@ private:
     };
     struct mem_change* (*naratte_get_mc)(void* cpu){};
     int8_t (*naratte_init_pseudo_mem)(void** mem, const char* boot, const char* game){};
+    void (*naratte_free_pseudo_mem)(void** mem){};
     uint8_t (*mem_read)(void* mem, uint16_t addr){};
     void (*mem_write)(void* mem, uint16_t addr, uint8_t data){};
+
+    void (*ppu_draw)(void* ppu, void* cpu);
 
     std::vector<Instruction> _instructions;
     std::vector<MemWrites> _mem_writes;

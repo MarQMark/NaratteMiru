@@ -2,7 +2,7 @@
 
 #include "imgui.h"
 
-ViewportView::ViewportView() {
+ViewportView::ViewportView(Naratte* naratte) : _naratte(naratte) {
     glGenTextures(1, &_fb_tex);
     glBindTexture(GL_TEXTURE_2D, _fb_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -20,6 +20,11 @@ ViewportView::~ViewportView() {
 }
 
 void ViewportView::render() {
+    if (_naratte->isDirty()) {
+        updateFB(_naratte->getFB());
+        _naratte->resetDirty();
+    }
+
     ImGui::Begin("Viewport");
 
     const float tex_width  = 256.0f;

@@ -8,9 +8,11 @@
 #define IMGUI_IMPL_OPENGL_LOADER_NONE
 #include <GL/gl.h>
 
+#include "Naratte.h"
+
 class ViewportView : public Viewable{
 public:
-    ViewportView();
+    explicit ViewportView(Naratte* naratte);
     ~ViewportView() override;
 
     void render() override;
@@ -18,6 +20,7 @@ public:
     void updateFB(const uint32_t* fb) const;
 
 private:
+    Naratte* _naratte{};
     GLuint _fb_tex = 0;
 };
 

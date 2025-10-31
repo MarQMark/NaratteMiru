@@ -12,13 +12,36 @@ Naratte::Naratte() {
 }
 
 Naratte::~Naratte() {
-    if (naratte_clean_d)
-        naratte_clean_d(_cpu, _ppu, _dasm);
+    if (naratte_free_d)
+        naratte_free_d(&_cpu, &_ppu, &_dasm);
 }
 
 void Naratte::reloadLib() {
     _instructions.clear();
     _mem_writes.clear();
+
+    if (naratte_free_d)
+        naratte_free_d(&_cpu, &_ppu, &_dasm);
+    if (naratte_free_pseudo_mem && _pseudo_mem)
+        naratte_free_pseudo_mem(&_pseudo_mem);
+
+    _cpu = nullptr;
+    _ppu = nullptr;
+    _dasm = nullptr;
+    _pseudo_mem = nullptr;
+    naratte_init_d = nullptr;
+    naratte_load_rom = nullptr;
+    naratte_tick = nullptr;
+    naratte_get_ic = nullptr;
+    naratte_disassemble = nullptr;
+    naratte_disassemble_cpu = nullptr;
+    naratte_free_d = nullptr;
+    naratte_get_mc = nullptr;
+    naratte_init_pseudo_mem = nullptr;
+    naratte_free_pseudo_mem = nullptr;
+    mem_read = nullptr;
+    mem_write = nullptr;
+    ppu_draw = nullptr;
 
     if (_lib_handle)
         dlclose(_lib_handle);
@@ -32,23 +55,33 @@ void Naratte::reloadLib() {
     dlerror();
 
     naratte_init_d          = reinterpret_cast<int8_t (*)(void**, void**, void**)>(dlsym(_lib_handle, "naratte_init_d"));
+    if (query_dl_error()) return;
     naratte_load_rom        = reinterpret_cast<int8_t (*)(void*, const char*, const char*)>(dlsym(_lib_handle, "naratte_load_rom"));
+    if (query_dl_error()) return;
     naratte_tick            = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, "naratte_tick"));
+    if (query_dl_error()) return;
     naratte_get_ic          = reinterpret_cast<void   (*)(void*, uint8_t*)>(dlsym(_lib_handle, "naratte_get_ic"));
+    if (query_dl_error()) return;
     naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*, uint8_t*)>(dlsym(_lib_handle, "naratte_disassemble"));
+    if (query_dl_error()) return;
     naratte_disassemble_cpu = reinterpret_cast<char*  (*)(void*, void*)>(dlsym(_lib_handle, "naratte_disassemble_cpu"));
-    naratte_clean_d         = reinterpret_cast<void   (*)(void*, void*, void*)>(dlsym(_lib_handle, "naratte_clean_d"));
+    if (query_dl_error()) return;
+    naratte_free_d          = reinterpret_cast<void   (*)(void**, void**, void**)>(dlsym(_lib_handle, "naratte_free_d"));
+    if (query_dl_error()) return;
 
     naratte_get_mc          = reinterpret_cast<struct mem_change* (*)(void*)>(dlsym(_lib_handle, "naratte_get_mc"));
+    if (query_dl_error()) return;
     naratte_init_pseudo_mem = reinterpret_cast<int8_t (*)(void**, const char*, const char*)>(dlsym(_lib_handle, "naratte_init_pseudo_mem"));
+    if (query_dl_error()) return;
+    naratte_free_pseudo_mem = reinterpret_cast<void   (*)(void**)>(dlsym(_lib_handle, "naratte_free_pseudo_mem"));
+    if (query_dl_error()) return;
     mem_read                = reinterpret_cast<uint8_t(*)(void*, uint16_t)>(dlsym(_lib_handle, "mem_read"));
+    if (query_dl_error()) return;
     mem_write               = reinterpret_cast<void   (*)(void*, uint16_t, uint8_t)>(dlsym(_lib_handle, "mem_write"));
-    const char* err = dlerror();
-    if (err) {
-        fprintf(stderr, "Symbol error: %s\n", err);
-        dlclose(_lib_handle);
-        return;
-    }
+    if (query_dl_error()) return;
+
+    ppu_draw                = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, "ppu_draw"));
+    if (query_dl_error()) return;
 
     if(!naratte_init_d(&_cpu, &_ppu, &_dasm)) {
         fprintf(stderr, "Error init naratte debug\n");
@@ -66,8 +99,10 @@ void Naratte::reloadLib() {
 }
 
 void Naratte::update() {
+    _dirty = false;
+
     for(int i = 0; i < 10000; i++) {
-        _instructions.emplace_back(Instruction{{0x0, 0x0, 0x0}});
+        _instructions.emplace_back(Instruction{{0x0, 0x0, 0x0, 0x1}});
         naratte_get_ic(_cpu, _instructions.back().op);
         memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
         naratte_tick(_cpu, _ppu);
@@ -95,6 +130,9 @@ std::vector<MemWrites> & Naratte::getMemWrites() {
 }
 
 void Naratte::reloadPseudoMem(const size_t iId) {
+    if (_pseudo_mem)
+        naratte_free_pseudo_mem(&_pseudo_mem);
+
     if (!naratte_init_pseudo_mem(&_pseudo_mem, _boot_path.c_str(), _game_path.c_str())) {
         fprintf(stderr, "Error init pseudo ram\n");
         return;
@@ -119,12 +157,33 @@ void* Naratte::getPseudoMem() const {
 }
 
 void Naratte::setSelected(const int selected) {
-    if (selected != _selected)
+    if (selected != _selected) {
         reloadPseudoMem(selected);
+        ppu_draw(_ppu, _pseudo_mem);
+        _dirty = true;
+    }
 
     _selected = selected;
 }
 
 int Naratte::getSelected() const {
     return _selected;
+}
+
+bool Naratte::isDirty() const {
+    return _dirty;
+}
+
+void Naratte::resetDirty() {
+    _dirty = false;
+}
+
+bool Naratte::query_dl_error() const {
+    if (const char* err = dlerror()) {
+        fprintf(stderr, "Symbol error: %s\n", err);
+        dlclose(_lib_handle);
+        return true;
+    }
+
+    return false;
 }
