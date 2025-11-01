@@ -15,7 +15,7 @@ void MemoryView::render() {
     constexpr int bytes_per_row = 16;
 
     // Store address input
-    static char input_addr_buf[8] = "0000";
+    static char input_addr_buf[8] = "FFFF";
     static uint16_t scroll_to_addr = 0;
     static bool do_scroll = false;
 

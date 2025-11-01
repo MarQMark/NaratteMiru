@@ -16,6 +16,11 @@ public:
 private:
     Naratte* _naratte{};
     long int _selected = -1;
+
+    std::string _jump_filter;
+
+    bool _jump_to = false;
+    void jump_filter(bool next);
 };
 
 

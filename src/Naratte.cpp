@@ -3,11 +3,14 @@
 #include <cstdio>
 #include <cstring>
 #include <dlfcn.h>
+#include <filesystem>
+#include <fstream>
 
 Naratte::Naratte() {
     _lib_path  = "";
     _boot_path = "";
     _game_path = "";
+    load_labels();
     reloadLib();
 }
 
@@ -102,6 +105,12 @@ void Naratte::update() {
     _dirty = false;
 
     for(int i = 0; i < 10000; i++) {
+        if (_instructions.size() >= 2 &&
+            _instructions[_instructions.size() - 2].op[0] == 0x18 &&
+            _instructions[_instructions.size() - 2].op[1] == 0xFD &&
+            _instructions[_instructions.size() - 1].op[0] == 0x00)
+            break;
+
         _instructions.emplace_back(Instruction{{0x0, 0x0, 0x0, 0x1}});
         naratte_get_ic(_cpu, _instructions.back().op);
         memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
@@ -176,6 +185,60 @@ bool Naratte::isDirty() const {
 
 void Naratte::resetDirty() {
     _dirty = false;
+}
+
+std::string Naratte::getCallLabel(const uint16_t addr) {
+    if (_call_labels.contains(addr))
+        return _call_labels[addr];
+
+    return "na";
+}
+
+void Naratte::load_labels() {
+    std::filesystem::path p = _game_path;
+    p.replace_extension(".sym");
+    std::string symPath = p.string();
+
+    std::ifstream file(symPath);
+    if (!file.is_open()) {
+        return;
+    }
+
+    std::string line;
+    bool inLabels = false;
+
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == ';')
+            continue;
+        if (line == "[labels]") {
+            inLabels = true;
+            continue;
+        }
+        if (line.size() > 0 && line[0] == '[' && inLabels && line != "[labels]") {
+            break;
+        }
+        if (!inLabels)
+            continue;
+
+        std::istringstream iss(line);
+
+        std::string addrStr;
+        std::string name;
+        if (!(iss >> addrStr >> name))
+            continue;
+
+        auto colonPos = addrStr.find(':');
+        if (colonPos == std::string::npos)
+            continue;
+
+        std::string bankStr  = addrStr.substr(0, colonPos);
+        std::string offStr   = addrStr.substr(colonPos + 1);
+
+        try {
+            _call_labels[static_cast<uint16_t>(std::stoul(offStr, nullptr, 16))]  = name;
+        } catch (...) {
+        }
+    }
 }
 
 bool Naratte::query_dl_error() const {

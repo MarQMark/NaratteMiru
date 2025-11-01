@@ -2,6 +2,7 @@
 #define NARATTEMIRU_NARATTE_H
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -73,6 +74,8 @@ public:
     bool isDirty() const;
     void resetDirty();
 
+    std::string getCallLabel(uint16_t addr);
+
 private:
     int _selected = -1;
     bool _dirty = false;
@@ -80,6 +83,9 @@ private:
     std::string _lib_path;
     std::string _boot_path;
     std::string _game_path;
+
+    std::map<uint16_t, std::string> _call_labels;
+    void load_labels();
 
     void* _lib_handle{};
 
@@ -113,7 +119,7 @@ private:
     uint8_t (*mem_read)(void* mem, uint16_t addr){};
     void (*mem_write)(void* mem, uint16_t addr, uint8_t data){};
 
-    void (*ppu_draw)(void* ppu, void* cpu);
+    void (*ppu_draw)(void* ppu, void* cpu){};
 
     std::vector<Instruction> _instructions;
     std::vector<MemWrites> _mem_writes;
