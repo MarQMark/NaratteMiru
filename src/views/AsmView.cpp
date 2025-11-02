@@ -258,7 +258,7 @@ void AsmView::print_pattern(const int pos, const int end, const int patternLen) 
     ss << pos;
 
     if (ImGui::TreeNode(ss.str().c_str())) {
-        for (int i = pos + patternLen; i < end; i++) {
+        for (int i = pos + patternLen; i <= end; i++) {
             char label[128] = {};
             get_label(label, 128, i);
             ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
