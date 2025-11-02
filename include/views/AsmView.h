@@ -16,6 +16,13 @@ public:
 private:
     Naratte* _naratte{};
     long int _selected = -1;
+    void get_label(char* label, size_t len, int id) const;
+
+    bool _format = false;
+    void render_raw();
+    void render_format() const;
+    int detect_pattern(int pos, int patternLen) const;
+    void print_pattern(int pos, int end, int patternLen) const;
 
     std::string _jump_filter;
 

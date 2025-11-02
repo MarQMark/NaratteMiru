@@ -96,7 +96,6 @@ private:
     void* _dasm{};
     void* _pseudo_mem{};
 
-    //int8_t (*naratte_init)(void** cpu, void** ppu){};
     int8_t (*naratte_init_d)(void** cpu, void** ppu, void** dasm){};
     int8_t (*naratte_load_rom)(void* cpu, const char* boot, const char* game){};
 
