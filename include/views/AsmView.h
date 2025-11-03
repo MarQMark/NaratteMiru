@@ -20,7 +20,9 @@ private:
 
     bool _format = false;
     void render_raw();
-    void render_format() const;
+    void render_format();
+    bool render_node(int& id, int depth, bool visible = true);
+    int get_stack_return(int id, int depth);
     int detect_pattern(int pos, int patternLen) const;
     void print_pattern(int pos, int end, int patternLen) const;
 

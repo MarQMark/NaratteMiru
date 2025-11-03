@@ -22,6 +22,7 @@ Naratte::~Naratte() {
 void Naratte::reloadLib() {
     _instructions.clear();
     _mem_writes.clear();
+    _call_stack.clear();
 
     if (naratte_free_d)
         naratte_free_d(&_cpu, &_ppu, &_dasm);
@@ -114,6 +115,7 @@ void Naratte::update() {
         _instructions.emplace_back(Instruction{{0x0, 0x0, 0x0, 0x1}});
         naratte_get_ic(_cpu, _instructions.back().op);
         memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
+        add_last_call();
         naratte_tick(_cpu, _ppu);
 
         for (const mem_change* change = naratte_get_mc(_cpu); change != nullptr; change = change->next) {
@@ -194,6 +196,10 @@ std::string Naratte::getCallLabel(const uint16_t addr) {
     return "na";
 }
 
+std::vector<std::pair<int, int>> & Naratte::getCallStack() {
+    return _call_stack;
+}
+
 void Naratte::load_labels() {
     std::filesystem::path p = _game_path;
     p.replace_extension(".sym");
@@ -249,4 +255,11 @@ bool Naratte::query_dl_error() const {
     }
 
     return false;
+}
+
+void Naratte::add_last_call() {
+    if (const auto instruction = _instructions.back(); instruction.isCall() || instruction.isJP())
+        _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, CALL});
+    else if (instruction.isRet())
+        _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, RET});
 }

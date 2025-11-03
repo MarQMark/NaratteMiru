@@ -70,20 +70,20 @@ void AsmView::render() {
 }
 
 void AsmView::get_label(char *label, const size_t len, const int id) const {
-    auto&[op, cpu] = _naratte->getInstructions()[id];
-    char* name = _naratte->getInstructionName(op);
+    auto& instruction = _naratte->getInstructions()[id];
+    char* name = _naratte->getInstructionName(instruction.op);
 
     char op1[4], op2[4];
-    snprintf(op1, sizeof(op1), "%02X", op[0]);
+    snprintf(op1, sizeof(op1), "%02X", instruction.op[0]);
 
-    if (op[3] >= 2)
-        snprintf(op2, sizeof(op2), "%02X", op[1]);
+    if (instruction.op[3] >= 2)
+        snprintf(op2, sizeof(op2), "%02X", instruction.op[1]);
     else
         snprintf(op2, sizeof(op2), "  ");
 
     char op3[4];
-    if (op[3] >= 3)
-        snprintf(op3, sizeof(op3), "%02X", op[2]);
+    if (instruction.op[3] >= 3)
+        snprintf(op3, sizeof(op3), "%02X", instruction.op[2]);
     else
         snprintf(op3, sizeof(op3), "  ");
 
@@ -91,10 +91,10 @@ void AsmView::get_label(char *label, const size_t len, const int id) const {
              id, op1, op2, op3, name);
 
 
-    if (std::string(name).find("CALL") != -1 || std::string(name).find("JP") != -1) {
-        uint16_t addr = (op[2] << 8) | op[1];
-        if (op[0] == 0xE9)
-            addr = cpu.HL;
+    if (instruction.isCall() || instruction.isJP()) {
+        uint16_t addr = (instruction.op[2] << 8) | instruction.op[1];
+        if (instruction.op[0] == 0xE9)
+            addr = instruction.cpu.HL;
         sprintf(label + 40, "| %s", _naratte->getCallLabel(addr).c_str());
         for (int c = 39; label[c] == 0 && c >= 0; c--)
             label[c] = ' ';
@@ -147,9 +147,8 @@ void AsmView::render_raw() {
     }
 }
 
-void AsmView::render_format() const {
+void AsmView::render_format() {
     if (ImGui::BeginListBox("##instr_list", ImVec2(-FLT_MIN, -FLT_MIN))) {
-        std::vector<bool> openStack;
         int stackSize = 0;
 
         const float item_h = ImGui::GetTextLineHeightWithSpacing();
@@ -171,51 +170,110 @@ void AsmView::render_format() const {
 
         auto& instructions = _naratte->getInstructions();
         for (int i = 4235257; i <instructions.size(); i++) {
-            std::string name = _naratte->getInstructionName(instructions[i].op);
-            char label[128] = {};
-            get_label(label, 128, i);
-
-            bool open = false;
-            if (name.find("RET")  != std::string::npos && false) {
-                ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
-                if (stackSize > 0) {
-                    if (openStack.back())
-                        ImGui::TreePop();
-                    openStack.pop_back();
-                    stackSize--;
-                }
-            }
-            else if ((name.find("CALL") != std::string::npos ||
-                     name.find("JP")   != std::string::npos) && false) {
-                open = ImGui::TreeNode(label);
-                openStack.push_back(open);
-                stackSize++;
-            }
-            else {
-                int end = i;
-                for (int patternLen = 1; patternLen <= 10; patternLen++) {
-                    end = detect_pattern(i, patternLen);
-                    if (end != i) {
-                        print_pattern(i, end, patternLen);
-                        break;
-                    }
-                }
-                if (end == i)
-                    ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
-                else
-                    i = end;
-            }
+            render_node(i, 0);
         }
 
-        while (stackSize > 0) {
-            if (openStack.back())
-                ImGui::TreePop();
-            openStack.pop_back();
-            stackSize--;
-        }
 
         ImGui::EndListBox();
     }
+}
+
+bool AsmView::render_node(int& id, int depth, bool visible) {
+    auto& instructions = _naratte->getInstructions();
+    std::string name = _naratte->getInstructionName(instructions[id].op);
+    char label[128] = {};
+    get_label(label, 128, id);
+
+    if (instructions[id].isRet()) {
+        if (visible) {
+            if (instructions[id].isRet())
+                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 255, 200, 255));
+            //ImGui::Selectable(label);
+            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+            if (instructions[id].isRet())
+                ImGui::PopStyleColor();
+        }
+        return true;
+    }
+
+    int end = id;
+    for (int patternLen = 1; patternLen <= 10; patternLen++) {
+        end = detect_pattern(id, patternLen);
+        if (end != id) {
+            if (visible)
+                print_pattern(id, end, patternLen);
+            if (id > 4335064)
+                printf("pattern: %d - %d : %d\n", id, end, patternLen);
+            break;
+        }
+    }
+    if (end == id) {
+        if (visible) {
+            if (instructions[id].isRet())
+                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 255, 200, 255));
+            //ImGui::Selectable(label);
+            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+            if (instructions[id].isRet())
+                ImGui::PopStyleColor();
+        }
+    }
+    else
+        id = end;
+
+    if (instructions[id].isCall() || instructions[id].isJP()) {
+#if 0
+        bool vis = false;
+        if (visible)
+            vis = ImGui::TreeNode(std::string(label + std::to_string(id)).c_str());
+        for (id += 1; id < instructions.size(); id++) {
+            if (render_node(id, vis && visible))
+                break;
+        }
+        if (vis)
+            ImGui::TreePop();
+#else
+        if (ImGui::TreeNode(std::string(std::to_string(depth) + std::string(" ") + label + std::to_string(id)).c_str())) {
+            for (id += 1; id < instructions.size(); id++) {
+                if (render_node(id, depth + 1, true))
+                    break;
+            }
+            ImGui::TreePop();
+        }
+        else {
+            id = get_stack_return(id, depth);
+        }
+#endif
+
+    }
+
+    return false;
+}
+
+int AsmView::get_stack_return(const int id, const int depth) {
+    auto callStack = _naratte->getCallStack();
+    int stackSize = 0;
+    for (const auto [stackId, type] : callStack){
+        if (stackId < 4235257)
+            continue;
+
+        if (type == Naratte::CALL) {
+            stackSize++;
+            auto instruction = _naratte->getInstructions()[stackId];
+            uint16_t addr = (instruction.op[2] << 8) | instruction.op[1];
+            if (instruction.op[0] == 0xE9)
+                addr = instruction.cpu.HL;
+            //printf("CALL %d, %d %s\n", stackSize, stackId, _naratte->getCallLabel(addr).c_str());
+        }
+        else if (type == Naratte::RET) {
+            stackSize--;
+            //printf("RET %d, %d\n", stackSize, stackId);
+
+            if (stackId > id && stackSize == depth)
+                return stackId;
+        }
+    }
+
+    return _naratte->getInstructions().size() - 2;
 }
 
 int AsmView::detect_pattern(const int pos, const int patternLen) const {

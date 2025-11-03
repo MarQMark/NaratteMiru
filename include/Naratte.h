@@ -15,6 +15,11 @@ struct Instruction {
             struct {
                 uint8_t F;  // Flags
                 uint8_t A;  // Accumulator
+
+#define FLAG_Z 0b10000000 // Zero
+#define FLAG_N 0b01000000 // Subtract
+#define FLAG_H 0b00100000 // Half-Carry
+#define FLAG_C 0b00010000 // Carry
             };
         };
 
@@ -43,6 +48,47 @@ struct Instruction {
         uint16_t PC; // Program Counter
         uint16_t SP; // Stack Pointer
     } cpu;
+
+    bool isCall() const {
+        switch (op[0]) {
+            case 0xCD: return true;                  // CALL nn
+            case 0xC4: return (cpu.F & FLAG_Z) == 0; // CALL NZ, nn
+            case 0xD4: return (cpu.F & FLAG_C) == 0; // CALL NC, nn
+            case 0xCC: return (cpu.F & FLAG_Z);      // CALL  Z, nn
+            case 0xDC: return (cpu.F & FLAG_C);      // CALL  C, nn
+            case 0xC7: return true;                  // RST 0x00
+            case 0xD7: return true;                  // RST 0x10
+            case 0xE7: return true;                  // RST 0x20
+            case 0xF7: return true;                  // RST 0x40
+            case 0xCF: return true;                  // RST 0x08
+            case 0xDF: return true;                  // RST 0x18
+            case 0xEF: return true;                  // RST 0x28
+            case 0xFF: return true;                  // RST 0x38
+            default: return false;
+        }
+    }
+    bool isJP() const {
+        switch (op[0]) {
+            case 0xC3: return true;                  // JP nn
+            case 0xE9: return true;                  // JP HL
+            case 0xC2: return (cpu.F & FLAG_Z) == 0; // JP NZ, nn
+            case 0xD2: return (cpu.F & FLAG_C) == 0; // JP NC, nn
+            case 0xCA: return (cpu.F & FLAG_Z);      // JP  Z, nn
+            case 0xDA: return (cpu.F & FLAG_C);      // JP  C, nn
+            default: return false;
+        }
+    }
+    bool isRet() const {
+        switch (op[0]) {
+            case 0xC9: return true;                  // RET
+            case 0xD9: return true;                  // RETI
+            case 0xC0: return (cpu.F & FLAG_Z) == 0; // RET NZ
+            case 0xD0: return (cpu.F & FLAG_C) == 0; // RET NC
+            case 0xC8: return (cpu.F & FLAG_Z);      // RET  Z
+            case 0xD8: return (cpu.F & FLAG_C);      // RET  C
+            default: return false;
+        }
+    }
 };
 struct MemWrites {
     size_t idx = 0;
@@ -75,6 +121,12 @@ public:
     void resetDirty();
 
     std::string getCallLabel(uint16_t addr);
+
+    enum {
+        CALL,
+        RET
+    };
+    std::vector<std::pair<int, int>>& getCallStack();
 
 private:
     int _selected = -1;
@@ -122,6 +174,9 @@ private:
 
     std::vector<Instruction> _instructions;
     std::vector<MemWrites> _mem_writes;
+
+    std::vector<std::pair<int, int>> _call_stack;
+    void add_last_call();
 };
 
 
