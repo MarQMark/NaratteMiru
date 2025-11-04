@@ -258,6 +258,7 @@ bool Naratte::query_dl_error() const {
 }
 
 void Naratte::add_last_call() {
+    // TODO: Make is JP dependent on set id val
     if (const auto instruction = _instructions.back(); instruction.isCall() || instruction.isJP())
         _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, CALL});
     else if (instruction.isRet())

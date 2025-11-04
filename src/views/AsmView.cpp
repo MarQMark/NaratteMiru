@@ -1,5 +1,7 @@
 #include "views/AsmView.h"
 
+#include <algorithm>
+#include <ranges>
 #include <sstream>
 
 #include "imgui.h"
@@ -53,8 +55,8 @@ void AsmView::render() {
 
     _naratte->setSelected(_selected);
 
-    ImGui::Begin("Mem Writes");
 
+    ImGui::Begin("Mem Writes");
     if (ImGui::BeginListBox("##instr_lis2t", ImVec2(-FLT_MIN, -FLT_MIN))) {
         for (const auto& [idx, addr, data] : _naratte->getMemWrites()) {
             if (_selected != idx)
@@ -65,7 +67,65 @@ void AsmView::render() {
 
         ImGui::EndListBox();
     }
+    ImGui::End();
 
+    ImGui::Begin("Call Stack");
+    if (ImGui::BeginListBox("##instr_lis3t", ImVec2(-FLT_MIN, -FLT_MIN))) {
+        const auto& completeCS = _naratte->getCallStack();
+        std::vector<std::pair<int, int>> callStack;
+        int i = 0;
+        // find last "function" call in stack to selected
+        for (; i < completeCS.size(); i++) {
+            if (_selected < completeCS[i].first) {
+                i--;
+                break;
+            }
+        }
+        if (i == completeCS.size())
+            i--;
+
+        int maxDepth = 0; // In reverse
+        int currentDepth = 0;
+        for (; i >= 0; i--) {
+            const auto& [idx, type] = completeCS[i];
+
+            if (type == Naratte::CALL)
+                currentDepth++;
+            else if (type == Naratte::RET)
+                currentDepth--;
+
+            if (currentDepth > maxDepth) {
+                maxDepth = currentDepth;
+
+                if (type == Naratte::CALL)
+                    callStack.emplace_back(std::pair{idx, type});
+            }
+        }
+        std::ranges::reverse(callStack);
+
+        int callDepth = 0;
+        for (const auto &idx: callStack | std::views::keys) {
+            if (idx < _start)
+                continue;
+
+            if (_selected < idx)
+                break;
+
+            const auto&[op, cpu] = _naratte->getInstructions()[idx];
+            uint16_t addr = (op[2] << 8) | op[1];
+            if (op[0] == 0xE9)
+                addr = cpu.HL;
+
+            char label[128]{};
+            sprintf(label, "%*s%s (%d)##CallStack", callDepth, "", _naratte->getCallLabel(addr).c_str(), idx);
+            ImGui::Selectable(label);
+            add_context_menu(idx);
+
+            callDepth++;
+        }
+
+        ImGui::EndListBox();
+    }
     ImGui::End();
 }
 
@@ -132,12 +192,7 @@ void AsmView::render_raw() {
 
                 if (ImGui::Selectable(label, is_selected))
                     _selected = i;
-                if (ImGui::BeginPopupContextItem()) {
-                    if (ImGui::MenuItem("Copy")) {
-                        ImGui::SetClipboardText(std::to_string(i).c_str());
-                    }
-                    ImGui::EndPopup();
-                }
+                add_context_menu(i);
                 if (is_selected)
                     ImGui::SetItemDefaultFocus();
             }
@@ -169,7 +224,7 @@ void AsmView::render_format() {
         }*/
 
         auto& instructions = _naratte->getInstructions();
-        for (int i = 4235257; i <instructions.size(); i++) {
+        for (int i = _start; i <instructions.size(); i++) {
             render_node(i, 0);
         }
 
@@ -178,102 +233,77 @@ void AsmView::render_format() {
     }
 }
 
-bool AsmView::render_node(int& id, int depth, bool visible) {
+bool AsmView::render_node(int& id, int depth) {
     auto& instructions = _naratte->getInstructions();
     std::string name = _naratte->getInstructionName(instructions[id].op);
     char label[128] = {};
     get_label(label, 128, id);
 
+    // RET detected -> go up in hierarchy
     if (instructions[id].isRet()) {
-        if (visible) {
-            if (instructions[id].isRet())
-                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 255, 200, 255));
-            //ImGui::Selectable(label);
-            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
-            if (instructions[id].isRet())
-                ImGui::PopStyleColor();
-        }
+        render_tree_node(id, true);
         return true;
     }
 
+    // Detect Pattern and group it
     int end = id;
     for (int patternLen = 1; patternLen <= 10; patternLen++) {
         end = detect_pattern(id, patternLen);
         if (end != id) {
-            if (visible)
-                print_pattern(id, end, patternLen);
-            if (id > 4335064)
-                printf("pattern: %d - %d : %d\n", id, end, patternLen);
+            print_pattern(id, end, patternLen);
             break;
         }
     }
+
+    // No pattern detected
     if (end == id) {
-        if (visible) {
-            if (instructions[id].isRet())
-                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 255, 200, 255));
-            //ImGui::Selectable(label);
-            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
-            if (instructions[id].isRet())
-                ImGui::PopStyleColor();
+
+        // TODO: Make is JP dependent on set id val
+        if (instructions[id].isCall() || instructions[id].isJP()) {
+            if (render_tree_node(id, false)) {
+                for (id += 1; id < instructions.size(); id++) {
+                    if (render_node(id, depth + 1))
+                        break;
+                }
+                ImGui::TreePop();
+            }
+            else {
+                // Don't render no open instructions of a "function"
+                id = get_stack_return(id, depth);
+            }
+        }
+        else {
+            // Just normal node (no pattern, no RET, no CALL/JP)
+            render_tree_node(id, true);
         }
     }
+    // Skip grouped pattern
     else
         id = end;
 
-    if (instructions[id].isCall() || instructions[id].isJP()) {
-#if 0
-        bool vis = false;
-        if (visible)
-            vis = ImGui::TreeNode(std::string(label + std::to_string(id)).c_str());
-        for (id += 1; id < instructions.size(); id++) {
-            if (render_node(id, vis && visible))
-                break;
-        }
-        if (vis)
-            ImGui::TreePop();
-#else
-        if (ImGui::TreeNode(std::string(std::to_string(depth) + std::string(" ") + label + std::to_string(id)).c_str())) {
-            for (id += 1; id < instructions.size(); id++) {
-                if (render_node(id, depth + 1, true))
-                    break;
-            }
-            ImGui::TreePop();
-        }
-        else {
-            id = get_stack_return(id, depth);
-        }
-#endif
-
-    }
 
     return false;
 }
 
-int AsmView::get_stack_return(const int id, const int depth) {
+int AsmView::get_stack_return(const int id, const int depth) const {
     auto callStack = _naratte->getCallStack();
     int stackSize = 0;
     for (const auto [stackId, type] : callStack){
-        if (stackId < 4235257)
+        if (stackId < _start)
             continue;
 
         if (type == Naratte::CALL) {
             stackSize++;
-            auto instruction = _naratte->getInstructions()[stackId];
-            uint16_t addr = (instruction.op[2] << 8) | instruction.op[1];
-            if (instruction.op[0] == 0xE9)
-                addr = instruction.cpu.HL;
-            //printf("CALL %d, %d %s\n", stackSize, stackId, _naratte->getCallLabel(addr).c_str());
         }
         else if (type == Naratte::RET) {
             stackSize--;
-            //printf("RET %d, %d\n", stackSize, stackId);
 
             if (stackId > id && stackSize == depth)
                 return stackId;
         }
     }
 
-    return _naratte->getInstructions().size() - 2;
+    return _naratte->getInstructions().size() - 1;
 }
 
 int AsmView::detect_pattern(const int pos, const int patternLen) const {
@@ -301,12 +331,10 @@ int AsmView::detect_pattern(const int pos, const int patternLen) const {
     return end;
 }
 
-void AsmView::print_pattern(const int pos, const int end, const int patternLen) const {
+void AsmView::print_pattern(const int pos, const int end, const int patternLen) {
     ImGui::Separator();
     for (int i = 0; i < patternLen; i++) {
-        char label[128] = {};
-        get_label(label, 128, pos + i);
-        ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+        render_tree_node(pos + i, true);
     }
 
     std::stringstream ss;
@@ -317,13 +345,44 @@ void AsmView::print_pattern(const int pos, const int end, const int patternLen) 
 
     if (ImGui::TreeNode(ss.str().c_str())) {
         for (int i = pos + patternLen; i <= end; i++) {
-            char label[128] = {};
-            get_label(label, 128, i);
-            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+            render_tree_node(i, true);
         }
         ImGui::TreePop();
     }
     ImGui::Separator();
+}
+
+bool AsmView::render_tree_node(const int id, const bool leaf) {
+    const auto instruction = _naratte->getInstructions()[id];
+    if (instruction.isRet())
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 255, 200, 255));
+
+    char label[128] = {};
+    get_label(label, 128, id);
+
+    const bool open = ImGui::TreeNodeEx(label,
+        (leaf ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen: 0 ) |
+        (id == _selected ? ImGuiTreeNodeFlags_Selected : 0));
+
+    if (ImGui::IsItemClicked()) {
+        _selected = id;
+    }
+
+    add_context_menu(id);
+
+    if (instruction.isRet())
+        ImGui::PopStyleColor();
+
+    return open;
+}
+
+void AsmView::add_context_menu(const int id) {
+    if (ImGui::BeginPopupContextItem()) {
+        if (ImGui::MenuItem("Copy")) {
+            ImGui::SetClipboardText(std::to_string(id).c_str());
+        }
+        ImGui::EndPopup();
+    }
 }
 
 void AsmView::jump_filter(bool next) {
@@ -351,7 +410,6 @@ void AsmView::jump_filter(bool next) {
             selection = std::stoi(_jump_filter);
         }
         catch (...) {
-            printf("test\n");
             for (int i = start; next ? (i < instructions.size()) : (i >= 0); next ? i++ : i--) {
                 std::string name = _naratte->getInstructionName(instructions[i].op);
                 if (name.find(_jump_filter) != std::string::npos) {
