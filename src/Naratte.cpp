@@ -6,10 +6,9 @@
 #include <filesystem>
 #include <fstream>
 
+#include "Config.h"
+
 Naratte::Naratte() {
-    _lib_path  = "";
-    _boot_path = "";
-    _game_path = "";
     load_labels();
     reloadLib();
 }
@@ -50,7 +49,7 @@ void Naratte::reloadLib() {
     if (_lib_handle)
         dlclose(_lib_handle);
 
-    _lib_handle = dlopen(_lib_path.c_str(), RTLD_LAZY);
+    _lib_handle = dlopen(Config::get()->getLibPath().c_str(), RTLD_LAZY);
     if (!_lib_handle) {
         fprintf(stderr, "Error: %s\n", dlerror());
         return;
@@ -66,7 +65,7 @@ void Naratte::reloadLib() {
     if (query_dl_error()) return;
     naratte_get_ic          = reinterpret_cast<void   (*)(void*, uint8_t*)>(dlsym(_lib_handle, "naratte_get_ic"));
     if (query_dl_error()) return;
-    naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*, uint8_t*)>(dlsym(_lib_handle, "naratte_disassemble"));
+    naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*)>(dlsym(_lib_handle, "naratte_disassemble"));
     if (query_dl_error()) return;
     naratte_disassemble_cpu = reinterpret_cast<char*  (*)(void*, void*)>(dlsym(_lib_handle, "naratte_disassemble_cpu"));
     if (query_dl_error()) return;
@@ -92,7 +91,7 @@ void Naratte::reloadLib() {
         return;
     }
 
-    if(!naratte_load_rom(_cpu, _boot_path.c_str(), _game_path.c_str())) {
+    if(!naratte_load_rom(_cpu, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
         fprintf(stderr, "Error loading ROMs\n");
         return;
     }
@@ -112,7 +111,7 @@ void Naratte::update() {
             _instructions[_instructions.size() - 1].op[0] == 0x00)
             break;
 
-        _instructions.emplace_back(Instruction{{0x0, 0x0, 0x0, 0x1}});
+        _instructions.emplace_back(Instruction{{0xDD, 0xDD, 0xDD, 0x0}});
         naratte_get_ic(_cpu, _instructions.back().op);
         memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
         add_last_call();
@@ -133,7 +132,7 @@ std::vector<Instruction>& Naratte::getInstructions() {
 }
 
 char* Naratte::getInstructionName(uint8_t *ic) const {
-    return naratte_disassemble(_dasm, ic, &ic[3]);
+    return naratte_disassemble(_dasm, ic);
 }
 
 std::vector<MemWrites> & Naratte::getMemWrites() {
@@ -144,7 +143,7 @@ void Naratte::reloadPseudoMem(const size_t iId) {
     if (_pseudo_mem)
         naratte_free_pseudo_mem(&_pseudo_mem);
 
-    if (!naratte_init_pseudo_mem(&_pseudo_mem, _boot_path.c_str(), _game_path.c_str())) {
+    if (!naratte_init_pseudo_mem(&_pseudo_mem, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
         fprintf(stderr, "Error init pseudo ram\n");
         return;
     }
@@ -156,7 +155,7 @@ void Naratte::reloadPseudoMem(const size_t iId) {
         mem_write(_pseudo_mem, addr, data);
     }
 
-    ((uint8_t*)_pseudo_mem)[98392] = 0;
+    //((uint8_t*)_pseudo_mem)[98392] = 0;
 }
 
 uint8_t Naratte::readPseudoMem(const uint16_t addr) const {
@@ -201,7 +200,7 @@ std::vector<std::pair<int, int>> & Naratte::getCallStack() {
 }
 
 void Naratte::load_labels() {
-    std::filesystem::path p = _game_path;
+    std::filesystem::path p = Config::get()->getGamePath();
     p.replace_extension(".sym");
     std::string symPath = p.string();
 

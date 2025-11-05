@@ -32,12 +32,15 @@ add_executable(NaratteMiru
         src/Miru.cpp
         src/Naratte.cpp
         src/View.cpp
+        src/Util.cpp
+        src/Config.cpp
 
         src/views/AsmView.cpp
         src/views/Menubar.cpp
         src/views/MemoryView.cpp
         src/views/RegisterView.cpp
         src/views/ViewportView.cpp
+        src/views/SettingsView.cpp
 )
 target_include_directories(NaratteMiru PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include

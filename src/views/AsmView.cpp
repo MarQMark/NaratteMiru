@@ -8,6 +8,28 @@
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 
+const uint8_t Instruction::type[256] = {
+    7,2,1,4, 3,3,1,5, 4,4,1,4, 3,3,1,5,
+    7,2,1,4, 3,3,1,5, 6,4,1,4, 3,3,1,5,
+    6,2,1,4, 3,3,1,3, 6,4,1,4, 3,3,1,3,
+    6,2,1,4, 3,3,1,3, 6,4,1,4, 3,3,1,3,
+
+    1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+    1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+    1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+    1,1,1,1, 1,1,6,1, 1,1,1,1, 1,1,1,1,
+
+    3,3,3,3, 3,3,3,3, 3,3,3,3, 3,3,3,3,
+    3,3,3,3, 3,3,3,3, 3,3,3,3, 3,3,3,3,
+    3,3,3,3, 3,3,3,3, 3,3,3,3, 3,3,3,3,
+    3,3,3,3, 3,3,3,3, 3,3,3,3, 3,3,3,3,
+
+    6,2,6,6, 6,2,3,6, 6,6,6,5, 6,6,3,6,
+    6,2,6,0, 6,2,3,6, 6,6,6,0, 6,0,3,6,
+    1,2,1,0, 0,2,3,6, 4,6,1,0, 0,0,3,6,
+    1,2,1,7, 0,2,3,6, 2,2,1,7, 0,0,3,6
+};
+
 AsmView::AsmView(Naratte* naratte) : _naratte(naratte){
 }
 
@@ -51,6 +73,9 @@ void AsmView::render() {
     else
         render_format();
 
+    ImGui::Separator();
+    _selected == -1 ? ImGui::Text("Selected: None") : ImGui::Text("Selected: %lu", _selected);
+    ImGui::SameLine(); ImGui::Text("(%lu)", _naratte->getInstructions().size());
     ImGui::End();
 
     _naratte->setSelected(_selected);
@@ -162,7 +187,8 @@ void AsmView::get_label(char *label, const size_t len, const int id) const {
 }
 
 void AsmView::render_raw() {
-    if (ImGui::BeginListBox("##instr_list", ImVec2(-FLT_MIN, -FLT_MIN))) {
+    auto height = ImGui::GetContentRegionAvail().y;
+    if (ImGui::BeginListBox("##instr_list", ImVec2(-FLT_MIN, height - 21))) {
         const float item_h = ImGui::GetTextLineHeightWithSpacing();
 
         if (_jump_to && _selected >= 0) {
@@ -186,15 +212,7 @@ void AsmView::render_raw() {
 
         while (clipper.Step()) {
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
-                const bool is_selected = (_selected == i);
-                char label[128] = {};
-                get_label(label, 128, i);
-
-                if (ImGui::Selectable(label, is_selected))
-                    _selected = i;
-                add_context_menu(i);
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus();
+                render_selectable(i);
             }
         }
 
@@ -203,31 +221,12 @@ void AsmView::render_raw() {
 }
 
 void AsmView::render_format() {
-    if (ImGui::BeginListBox("##instr_list", ImVec2(-FLT_MIN, -FLT_MIN))) {
-        int stackSize = 0;
-
-        const float item_h = ImGui::GetTextLineHeightWithSpacing();
-        /*if (_jump_to && _selected >= 0) {
-            // Compute desired scroll Y in pixels so selected item is centered
-            ImGuiWindow* listWindow = ImGui::GetCurrentWindow(); // this is the listbox child window
-            float list_h = ImGui::GetWindowHeight();
-
-            // If your visual rows differ from indices (e.g. grouped/expanded rows),
-            // replace `_selected` with the visual-row index:
-            int visualIndex = _selected; // <- change this if you use visibleRows
-
-            float target_y = visualIndex * item_h - (list_h * 0.5f) + (item_h * 0.5f);
-            if (target_y < 0.0f) target_y = 0.0f;
-
-            ImGui::SetScrollY(target_y);   // set the child window scroll BEFORE the clipper
-            _jump_to = false;    // done
-        }*/
-
+    auto height = ImGui::GetContentRegionAvail().y;
+    if (ImGui::BeginListBox("##instr_list", ImVec2(-FLT_MIN, height - 21))) {
         auto& instructions = _naratte->getInstructions();
         for (int i = _start; i <instructions.size(); i++) {
             render_node(i, 0);
         }
-
 
         ImGui::EndListBox();
     }
@@ -235,7 +234,6 @@ void AsmView::render_format() {
 
 bool AsmView::render_node(int& id, int depth) {
     auto& instructions = _naratte->getInstructions();
-    std::string name = _naratte->getInstructionName(instructions[id].op);
     char label[128] = {};
     get_label(label, 128, id);
 
@@ -260,6 +258,9 @@ bool AsmView::render_node(int& id, int depth) {
 
         // TODO: Make is JP dependent on set id val
         if (instructions[id].isCall() || instructions[id].isJP()) {
+            if (_selected > id && _selected <= get_ret_from_call(id))
+                ImGui::SetNextItemOpen(true, ImGuiCond_Always);
+
             if (render_tree_node(id, false)) {
                 for (id += 1; id < instructions.size(); id++) {
                     if (render_node(id, depth + 1))
@@ -306,6 +307,26 @@ int AsmView::get_stack_return(const int id, const int depth) const {
     return _naratte->getInstructions().size() - 1;
 }
 
+int AsmView::get_ret_from_call(const int id) const {
+    int depth = -1;
+    for (const auto& [idx, type] : _naratte->getCallStack()) {
+        if (idx == id)
+            depth = 0;
+
+        if (depth != -1) {
+            if (type == Naratte::CALL)
+                depth++;
+            else if (type == Naratte::RET)
+                depth--;
+
+            if (depth == 0)
+                return idx;
+        }
+    }
+
+    return _naratte->getInstructions().size() - 1;
+}
+
 int AsmView::detect_pattern(const int pos, const int patternLen) const {
     auto& instructions = _naratte->getInstructions();
     if(pos + patternLen > instructions.size())
@@ -339,11 +360,15 @@ void AsmView::print_pattern(const int pos, const int end, const int patternLen) 
 
     std::stringstream ss;
     ss << "Repeated ";
-    ss << ((end - pos) / patternLen) - 1;
+    ss << ((end - pos) / patternLen);
     ss << " times###";
     ss << pos;
 
-    if (ImGui::TreeNode(ss.str().c_str())) {
+    ImGuiTreeNodeFlags flags = 0;
+    if (_selected >= pos + patternLen && _selected <= end)
+        flags |= ImGuiTreeNodeFlags_Selected;
+
+    if (ImGui::TreeNodeEx(ss.str().c_str(), flags)) {
         for (int i = pos + patternLen; i <= end; i++) {
             render_tree_node(i, true);
         }
@@ -352,13 +377,29 @@ void AsmView::print_pattern(const int pos, const int end, const int patternLen) 
     ImGui::Separator();
 }
 
+static constexpr ImVec4 palette[] = {
+    ImVec4(0.60f, 0.60f, 0.60f, 1.00f), // grey
+    ImVec4(0.26f, 0.59f, 0.98f, 1.00f), // blue
+    ImVec4(0.30f, 0.85f, 0.50f, 1.00f), // green
+    ImVec4(0.90f, 0.85f, 0.30f, 1.00f), // yellow
+    ImVec4(1.00f, 0.45f, 0.70f, 1.00f), // pink
+    ImVec4(0.30f, 0.90f, 0.90f, 1.00f), // cyan
+    ImVec4(1.00f, 0.65f, 0.30f, 1.00f), // orange
+    ImVec4(0.70f, 0.50f, 0.90f, 1.00f), // purple
+};
+
 bool AsmView::render_tree_node(const int id, const bool leaf) {
     const auto instruction = _naratte->getInstructions()[id];
-    if (instruction.isRet())
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 255, 200, 255));
+    ImGui::PushStyleColor(ImGuiCol_Text, palette[instruction.getType()]);
 
     char label[128] = {};
     get_label(label, 128, id);
+
+    if (id == _selected && _jump_to) {
+        const auto windowPos = ImGui::GetCursorPosY();
+        ImGui::SetScrollY(windowPos);
+        _jump_to = false;
+    }
 
     const bool open = ImGui::TreeNodeEx(label,
         (leaf ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen: 0 ) |
@@ -369,11 +410,25 @@ bool AsmView::render_tree_node(const int id, const bool leaf) {
     }
 
     add_context_menu(id);
-
-    if (instruction.isRet())
-        ImGui::PopStyleColor();
-
+    ImGui::PopStyleColor();
     return open;
+}
+
+void AsmView::render_selectable(const int id) {
+    const auto instruction = _naratte->getInstructions()[id];
+    ImGui::PushStyleColor(ImGuiCol_Text, palette[instruction.getType()]);
+
+    const bool is_selected = (_selected == id);
+    char label[128] = {};
+    get_label(label, 128, id);
+
+    if (ImGui::Selectable(label, is_selected))
+        _selected = id;
+    add_context_menu(id);
+    if (is_selected)
+        ImGui::SetItemDefaultFocus();
+
+    ImGui::PopStyleColor();
 }
 
 void AsmView::add_context_menu(const int id) {
@@ -394,12 +449,7 @@ void AsmView::jump_filter(bool next) {
     }
     if (_jump_filter.empty()) {
         for (int i = start; next ? (i < instructions.size()) : (i >= 0); next ? i++ : i--) {
-            std::string name = _naratte->getInstructionName(instructions[i].op);
-            const bool found = name.find("CALL") != std::string::npos ||
-                               name.find("JP")   != std::string::npos ||
-                               name.find("RET")  != std::string::npos;
-            if (found) {
-                printf("%d\n", i);
+            if (instructions[i].isRet() || instructions[i].isCall() || instructions[i].isJP()) {
                 selection = i;
                 break;
             }

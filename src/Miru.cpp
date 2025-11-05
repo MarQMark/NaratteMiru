@@ -11,12 +11,14 @@ Miru::Miru() {
     _memory_view = new MemoryView(_naratte);
     _register_view = new RegisterView(_naratte);
     _viewport_view = new ViewportView(_naratte);
+    _settings_view = new SettingsView();
 
     _view->addViewable(_menubar, "Menubar");
     _view->addViewable(_asm_view, "Assembly");
     _view->addViewable(_memory_view, "Memory");
     _view->addViewable(_register_view, "Registers");
     _view->addViewable(_viewport_view, "Viewport");
+    _view->addViewable(_settings_view, "Settings");
 }
 
 Miru::~Miru() {

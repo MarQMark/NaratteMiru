@@ -9,6 +9,7 @@
 #include "views/AsmView.h"
 #include "views/MemoryView.h"
 #include "views/RegisterView.h"
+#include "views/SettingsView.h"
 #include "views/ViewportView.h"
 
 class Miru {
@@ -27,6 +28,7 @@ private:
     MemoryView* _memory_view{};
     RegisterView* _register_view{};
     ViewportView* _viewport_view{};
+    SettingsView* _settings_view{};
 
     Naratte* _naratte{};
 

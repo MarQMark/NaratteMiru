@@ -16,6 +16,12 @@ void Menubar::render() {
                 if (ImGui::MenuItem("Reload"))
                     _reload = true;
 
+                if (ImGui::MenuItem("Settings"))
+                    static_cast<View *>(view)->getViewable("Settings")->setVisible(true);
+
+                if (ImGui::MenuItem("Export"))
+                    ;
+
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("View")) {

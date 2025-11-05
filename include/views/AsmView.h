@@ -23,10 +23,12 @@ private:
     void render_format();
     bool render_node(int& id, int depth);
     int get_stack_return(int id, int depth) const;
+    int get_ret_from_call(int id) const;
     int detect_pattern(int pos, int patternLen) const;
     void print_pattern(int pos, int end, int patternLen);
 
     bool render_tree_node(int id, bool leaf);
+    void render_selectable(int id);
 
     void add_context_menu(int id);
 

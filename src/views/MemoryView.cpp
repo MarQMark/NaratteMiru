@@ -1,5 +1,6 @@
 #include "views/MemoryView.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 
@@ -52,6 +53,15 @@ void MemoryView::render() {
     // Approx line height (text height)
     float line_height = ImGui::GetTextLineHeightWithSpacing() + 3;
 
+    std::vector<uint16_t> lastWrites;
+    for (const auto& [idx, addr, data] : _naratte->getMemWrites()) {
+        if (idx > _naratte->getSelected())
+            break;
+
+        if (idx == _naratte->getSelected())
+            lastWrites.push_back(addr);
+    }
+
     if (ImGui::BeginTable("mem_table", 3,
         ImGuiTableFlags_ScrollY |
         ImGuiTableFlags_RowBg |
@@ -91,30 +101,46 @@ void MemoryView::render() {
                 // Hex bytes
                 ImGui::TableSetColumnIndex(1);
                 {
-                    char buf[bytes_per_row * 3 + 1];
-                    char* out = buf;
-
                     for (int i = 0; i < bytes_per_row; i++)
                     {
-                        if (i == 8)
-                            out += sprintf(out, " ");
-                        uint8_t value = _naratte->readPseudoMem(base_addr + i);
-                        out += sprintf(out, "%02X ", value);
-                    }
-                    ImGui::TextUnformatted(buf);
-                }
+                        uint16_t addr = base_addr + i;
+                        const uint8_t value = _naratte->readPseudoMem(addr);
 
+                        if (i == 8)
+                            ImGui::SameLine(), ImGui::TextUnformatted(" ");
+
+                        const bool highlight = std::ranges::find(lastWrites, addr) != lastWrites.end();
+
+                        if (highlight)
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::Text("%02X ", value);
+
+                        if (highlight)
+                            ImGui::PopStyleColor();
+                    }
+                }
                 // ASCII
                 ImGui::TableSetColumnIndex(2);
                 {
-                    char buf[bytes_per_row + 1];
                     for (int i = 0; i < bytes_per_row; i++)
                     {
-                        uint8_t value = _naratte->readPseudoMem(base_addr + i);
-                        buf[i] = (value >= 32 && value < 127) ? value : '.';
+                        uint16_t addr = base_addr + i;
+                        const uint8_t value = _naratte->readPseudoMem(addr);
+
+                        const bool highlight = std::ranges::find(lastWrites, addr) != lastWrites.end();
+                        const char c = (value >= 32 && value < 127) ? value : '.';
+
+                        if (highlight)
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::Text("%c", c);
+
+                        if (highlight)
+                            ImGui::PopStyleColor();
                     }
-                    buf[bytes_per_row] = 0;
-                    ImGui::TextUnformatted(buf);
                 }
             }
         }

@@ -7,7 +7,7 @@
 #include <vector>
 
 struct Instruction {
-    uint8_t op[4] = {0xFD, 0xFD, 0xFD}; // Invalid Opcodes
+    uint8_t op[4] = {0xDD, 0xDD, 0xDD, 0x00}; // Invalid Opcodes
     struct sm83 {
         uint8_t IME;
         union {
@@ -48,6 +48,23 @@ struct Instruction {
         uint16_t PC; // Program Counter
         uint16_t SP; // Stack Pointer
     } cpu;
+
+    enum Type {
+        UDEF = 0,
+        LOAD_8 = 1,
+        LOAD_16 = 2,
+        ARI_8 = 3,
+        ARI_16 = 4,
+        BIT = 5,
+        FLOW = 6,
+        MISC = 7
+    };
+private:
+    static const uint8_t type[256];
+public:
+    uint8_t getType() const {
+        return type[op[0]];
+    }
 
     bool isCall() const {
         switch (op[0]) {
@@ -132,10 +149,6 @@ private:
     int _selected = -1;
     bool _dirty = false;
 
-    std::string _lib_path;
-    std::string _boot_path;
-    std::string _game_path;
-
     std::map<uint16_t, std::string> _call_labels;
     void load_labels();
 
@@ -154,7 +167,7 @@ private:
     void (*naratte_tick)(void* cpu, void* ppu){};
 
     void (*naratte_get_ic)(void *cpu, uint8_t* ic){};
-    char* (*naratte_disassemble)(void* dasm, uint8_t *ins, uint8_t* mcc){};
+    char* (*naratte_disassemble)(void* dasm, uint8_t *ins){};
     char* (*naratte_disassemble_cpu)(void* cpu, void* dasm){};
 
     void (*naratte_free_d)(void** cpu, void** ppu, void** dasm){};
