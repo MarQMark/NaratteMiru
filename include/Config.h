@@ -22,6 +22,7 @@ public:
     void setBootPath(const std::string& path);
     void setGamePath(const std::string& path);
 
+    int Ticks = 1000;
 private:
     std::string _path_lib{};
     std::string _path_boot{};

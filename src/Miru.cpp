@@ -1,5 +1,6 @@
 #include "Miru.h"
 
+#include <Config.h>
 #include <dlfcn.h>
 
 Miru::Miru() {
@@ -34,14 +35,12 @@ Miru::~Miru() {
 void Miru::update() {
     if (_menubar->reload()) {
         _menubar->resetReload();
-        _naratte->reloadLib();
-        _ticks = 1000;
+        _naratte->reload();
     }
 
-    if(_ticks > 0) {
+    if(Config::get()->Ticks > 0) {
         _naratte->update();
         _viewport_view->updateFB(_naratte->getFB());
-        _ticks--;
     }
 
     _view->render();

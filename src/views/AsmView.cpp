@@ -59,12 +59,20 @@ void AsmView::render() {
 
     const ImGuiIO& io = ImGui::GetIO();
     const bool ctrl = io.KeyCtrl;
-    // Ctrl + Up → prev
     if (ctrl && ImGui::IsKeyPressed(ImGuiKey_UpArrow))
         jump_filter(false);
-    // Ctrl + Down → next
+    else if (ImGui::IsKeyPressed(ImGuiKey_UpArrow)) {
+        _selected = (_selected - 1) < 0 ? ((int)_naratte->getInstructions().size() - 1) : _selected - 1;
+        _jump_to = true;
+    }
     if (ctrl && ImGui::IsKeyPressed(ImGuiKey_DownArrow))
         jump_filter(true);
+    else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) {
+        _selected = (_selected + 1) % (int)_naratte->getInstructions().size();
+        _jump_to = true;
+    }
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_R))
+        _naratte->reload();
 
     ImGui::Separator();
 
@@ -76,6 +84,11 @@ void AsmView::render() {
     ImGui::Separator();
     _selected == -1 ? ImGui::Text("Selected: None") : ImGui::Text("Selected: %lu", _selected);
     ImGui::SameLine(); ImGui::Text("(%lu)", _naratte->getInstructions().size());
+    if(_selected != -1) {
+        ImGui::SameLine();
+        char* name = _naratte->getInstructionName(_naratte->getInstructions()[_selected].op);
+        ImGui::Text(name);
+    }
     ImGui::End();
 
     _naratte->setSelected(_selected);

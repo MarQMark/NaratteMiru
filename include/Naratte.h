@@ -118,6 +118,8 @@ public:
     Naratte();
     ~Naratte();
 
+    void reload();
+    void reloadROM();
     void reloadLib();
     void update();
 

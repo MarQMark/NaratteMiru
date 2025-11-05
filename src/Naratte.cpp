@@ -9,13 +9,27 @@
 #include "Config.h"
 
 Naratte::Naratte() {
-    load_labels();
-    reloadLib();
+    reload();
 }
 
 Naratte::~Naratte() {
     if (naratte_free_d)
         naratte_free_d(&_cpu, &_ppu, &_dasm);
+}
+
+void Naratte::reload() {
+    Config::get()->Ticks = 1000;
+    _selected = 0;
+    reloadROM();
+    reloadLib();
+}
+
+void Naratte::reloadROM() {
+    _instructions.clear();
+    _mem_writes.clear();
+    _call_stack.clear();
+    _call_labels.clear();
+    load_labels();
 }
 
 void Naratte::reloadLib() {
@@ -105,11 +119,13 @@ void Naratte::update() {
     _dirty = false;
 
     for(int i = 0; i < 10000; i++) {
-        if (_instructions.size() >= 2 &&
-            _instructions[_instructions.size() - 2].op[0] == 0x18 &&
-            _instructions[_instructions.size() - 2].op[1] == 0xFD &&
-            _instructions[_instructions.size() - 1].op[0] == 0x00)
+        if (!_instructions.empty() &&
+            _instructions.back().op[0] == 0x18 &&
+            _instructions.back().op[1] == 0xFE) {
+            printf("Stop\n");
+            Config::get()->Ticks = 0;
             break;
+        }
 
         _instructions.emplace_back(Instruction{{0xDD, 0xDD, 0xDD, 0x0}});
         naratte_get_ic(_cpu, _instructions.back().op);
