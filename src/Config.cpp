@@ -87,7 +87,7 @@ void Config::setJaCEnd(const int end) {
 }
 
 bool Config::isJPasCall(const int id, const int max) const {
-    return _jp_as_call && id >= _jac_start && id <= (_jac_end == -1 ? max : _jac_end);
+    return _jp_as_call && id >= _jac_start && id <= (_jac_end < 0 ? max : _jac_end);
 }
 
 bool Config::dirtyCallStack() {

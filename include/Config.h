@@ -32,6 +32,8 @@ public:
 
     int Ticks = 1000;
 
+    bool Pause = false;
+
     bool dirtyCallStack();
 private:
     std::string _path_lib{};

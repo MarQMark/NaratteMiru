@@ -123,6 +123,8 @@ public:
     void reloadLib();
     void update();
 
+    void rebuildCallStack();
+
     uint32_t* getFB() const;
     std::vector<Instruction>& getInstructions();
     char* getInstructionName(uint8_t* ic) const;
@@ -194,7 +196,6 @@ private:
 
     std::vector<std::pair<int, int>> _call_stack;
     void add_last_call();
-    void rebuild_call_stack();
 };
 
 

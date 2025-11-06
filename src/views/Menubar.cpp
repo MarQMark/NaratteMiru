@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "Config.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "View.h"
@@ -31,6 +32,9 @@ void Menubar::render() {
                 add_menu_view("Viewport", &_viewport_view);
 
                 ImGui::EndMenu();
+            }
+            if (ImGui::Button(Config::get()->Pause ? "Resume" : "Pause")) {
+                Config::get()->Pause = !Config::get()->Pause;
             }
             ImGui::EndMenuBar();
         }

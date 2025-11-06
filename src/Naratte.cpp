@@ -117,8 +117,6 @@ void Naratte::reloadLib() {
 
 void Naratte::update() {
     _dirty = false;
-    if (Config::get()->dirtyCallStack())
-        rebuild_call_stack();
 
     for(int i = 0; i < 10000; i++) {
         if (is_inf_loop()) {
@@ -296,7 +294,7 @@ void Naratte::add_last_call() {
         _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, RET});
 }
 
-void Naratte::rebuild_call_stack() {
+void Naratte::rebuildCallStack() {
     _call_stack.clear();
     for (int i = 0; i < _instructions.size(); i++) {
         if (const auto& instruction = _instructions[i]; instruction.isCall() ||

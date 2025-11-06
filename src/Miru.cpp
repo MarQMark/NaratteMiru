@@ -38,7 +38,10 @@ void Miru::update() {
         _naratte->reload();
     }
 
-    if(Config::get()->Ticks > 0) {
+    if (Config::get()->dirtyCallStack())
+        _naratte->rebuildCallStack();
+
+    if(Config::get()->Ticks > 0 && !Config::get()->Pause) {
         _naratte->update();
         _viewport_view->updateFB(_naratte->getFB());
     }
