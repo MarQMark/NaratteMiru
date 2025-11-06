@@ -14,9 +14,12 @@ public:
     void setVisible(const bool visible) override;
 
 private:
+    bool _dirty = false;
+
     int _menu = 0;
 
     std::string _lib_path{};
+    bool _auto_reload = false;
     std::string _boot_path{};
     std::string _game_path{};
 
@@ -27,7 +30,7 @@ private:
     void menu_general();
     void menu_format();
 
-    void apply() const;
+    void apply();
 };
 
 

@@ -1,5 +1,25 @@
 #include "Util.h"
 
+#include <chrono>
+#include <filesystem>
+#include <thread>
+
+
+bool Util::WaitForStableFile(const std::string& path, const int retries) {
+    namespace fs = std::filesystem;
+    uintmax_t lastSize = 0;
+
+    for (int i = 0; i < retries; i++) {
+        const auto curSize = fs::file_size(path);
+        if (curSize == lastSize && curSize != 0)
+            return true;
+
+        lastSize = curSize;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    return false;
+}
+
 #ifdef __linux__
 std::string Util::OpenExplorer(const std::string &filter, const std::string &title) {
     const std::string cmd = ("zenity --file-selection --file-filter='" + filter + "'  --title='" + title + "'");

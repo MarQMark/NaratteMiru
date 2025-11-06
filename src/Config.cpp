@@ -1,11 +1,16 @@
 #include "Config.h"
 
+#include <chrono>
+#include <filesystem>
 #include <fstream>
 
 Config* Config::s_instance = nullptr;
 
 Config::Config() {
     load();
+
+    if (_auto_reload)
+        _last_modified = last_modified(_path_lib);
 }
 
 Config* Config::get() {
@@ -24,6 +29,12 @@ void Config::load() {
     std::getline(ifs, _path_boot);
     std::getline(ifs, _path_game);
     std::string var;
+    std::getline(ifs, var);
+    if(!var.empty()) {
+        try {
+            _auto_reload = std::stoi(var);
+        } catch (...) {}
+    }
     std::getline(ifs, var);
     if(!var.empty()) {
         try {
@@ -52,6 +63,7 @@ void Config::save() const {
     ofs << _path_lib  << "\n";
     ofs << _path_boot << "\n";
     ofs << _path_game << "\n";
+    ofs << _auto_reload << "\n";
     ofs << _jp_as_call << "\n";
     ofs << _jac_start << "\n";
     ofs << _jac_end << "\n";
@@ -67,6 +79,29 @@ const std::string & Config::getBootPath() {
 
 const std::string & Config::getGamePath() {
     return _path_game;
+}
+
+void Config::setAutoReload(const bool enable) {
+    _auto_reload = enable;
+
+    if (enable)
+        _last_modified = last_modified(_path_lib);
+}
+
+bool Config::getAutoReload() const {
+    return _auto_reload;
+}
+
+bool Config::libNaratteChanged() {
+    if (!_auto_reload)
+        return false;
+
+    if (const auto lastModified = last_modified(_path_lib); _last_modified != lastModified) {
+        _last_modified = lastModified;
+        return true;
+    }
+
+    return false;
 }
 
 void Config::setLibPath(const std::string &path) {
@@ -119,4 +154,15 @@ bool Config::dirtyCallStack() {
     }
 
     return false;
+}
+
+std::time_t Config::last_modified(const std::string &path) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    const auto ftime = fs::last_write_time(path, ec);
+    if (ec)
+        return -1;
+
+    const auto sctp = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+    return std::chrono::system_clock::to_time_t(sctp);
 }

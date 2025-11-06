@@ -149,7 +149,7 @@ public:
     };
     std::vector<std::pair<int, int>>& getCallStack();
 
-    void serialize(const std::string& path);
+    void serialize(const std::string& path) const;
     void deserialize(const std::string& path);
 
 private:

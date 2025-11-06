@@ -7,12 +7,13 @@ Miru::Miru() {
     _naratte = new Naratte;
 
     _view = new View;
-    _menubar = new Menubar;
+    _menubar = new Menubar(_naratte);
     _asm_view = new AsmView(_naratte);
     _memory_view = new MemoryView(_naratte);
     _register_view = new RegisterView(_naratte);
     _viewport_view = new ViewportView(_naratte);
     _settings_view = new SettingsView();
+    _export_view = new ExportView(_naratte);
 
     _view->addViewable(_menubar, "Menubar");
     _view->addViewable(_asm_view, "Assembly");
@@ -20,6 +21,7 @@ Miru::Miru() {
     _view->addViewable(_register_view, "Registers");
     _view->addViewable(_viewport_view, "Viewport");
     _view->addViewable(_settings_view, "Settings");
+    _view->addViewable(_export_view, "Export");
 }
 
 Miru::~Miru() {
@@ -33,7 +35,7 @@ Miru::~Miru() {
 }
 
 void Miru::update() {
-    if (_menubar->reload()) {
+    if (_menubar->reload() || Config::get()->libNaratteChanged()) {
         _menubar->resetReload();
         Config::get()->load();
         _naratte->reload();

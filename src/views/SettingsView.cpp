@@ -60,9 +60,15 @@ void SettingsView::render() {
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
+
+        const bool dirty = _dirty;
+        if (!dirty)
+            ImGui::BeginDisabled();
         if (ImGui::Button("Apply",ImVec2(buttonW, 0))) {
             apply();
         }
+        if (!dirty)
+            ImGui::EndDisabled();
 
         ImGui::EndPopup();
     }
@@ -70,6 +76,7 @@ void SettingsView::render() {
 
 void SettingsView::setVisible(const bool visible) {
     if (!_visible && visible) {
+        _auto_reload = Config::get()->getAutoReload();
         _lib_path = Config::get()->getLibPath();
         _boot_path = Config::get()->getBootPath();
         _game_path = Config::get()->getGamePath();
@@ -87,41 +94,56 @@ void SettingsView::menu_general() {
 
     ImGui::Text("Narrate Path");
     ImGui::SetNextItemWidth(inputW);
+    const std::string libPathShdw = _lib_path;
     ImGui::InputText("###LibPathInput", &_lib_path);
     ImGui::SameLine();
     if (ImGui::Button("O###BtnLib", ImVec2(inputH, inputH))) {
         if (const auto path = Util::OpenExplorer("*.so *.dll", "Select Naratte Library"); !path.empty())
             _lib_path = path;
     }
+    if (libPathShdw != _lib_path) _dirty = true;
+
+    ImGui::Dummy(ImVec2(0, 10));
+    const bool autoReloadShdw = _auto_reload;
+    ImGui::Checkbox("###auto-reload", &_auto_reload);
+    ImGui::SameLine();
+    ImGui::Text("Auto-Reload");
+    if (autoReloadShdw != _auto_reload) _dirty = true;
 
     ImGui::Dummy(ImVec2(0, 5));
     ImGui::Separator();
-    ImGui::Dummy(ImVec2(0, 5));
+    ImGui::Dummy(ImVec2(0, 15));
 
     ImGui::Text("Boot ROM Path");
     ImGui::SetNextItemWidth(inputW);
+    const std::string bootPathShdw = _boot_path;
     ImGui::InputText("###BootPathInput", &_boot_path);
     ImGui::SameLine();
     if (ImGui::Button("O###BtnBoot", ImVec2(inputH, inputH))) {
         if (const auto path = Util::OpenExplorer("*.bin", "Select Boot ROM"); !path.empty())
             _boot_path = path;
     }
+    if (bootPathShdw != _boot_path) _dirty = true;
 
     ImGui::Dummy(ImVec2(0, 10));
 
     ImGui::Text("Game ROM Path");
     ImGui::SetNextItemWidth(inputW);
+    const std::string gamePathShdw = _game_path;
     ImGui::InputText("###GamePathInput", &_game_path);
     ImGui::SameLine();
     if (ImGui::Button("O###BtnGame", ImVec2(inputH, inputH))) {
         if (const auto path = Util::OpenExplorer("*.gb *.gbc", "Select Game ROM"); !path.empty())
             _game_path = path;
     }
+    if (gamePathShdw != _game_path) _dirty = true;
 }
 
 void SettingsView::menu_format() {
     ImGui::Text("Treat JP as CALL:");
+    const bool JPasCallShdw = _jp_as_call;
     ImGui::Checkbox("##$JAC", &_jp_as_call);
+    if (JPasCallShdw != _jp_as_call) _dirty = true;
 
     const auto inputW = (ImGui::GetContentRegionAvail().x - 20) / 3;
 
@@ -130,26 +152,33 @@ void SettingsView::menu_format() {
 
     ImGui::SameLine();
     ImGui::SetNextItemWidth(inputW);
+    const int jacStartShdw = _jac_start;
     std::string start = std::to_string(_jac_start);
     ImGui::InputText("Start", &start, ImGuiInputTextFlags_CharsDecimal);
     try {
         _jac_start = std::stoi(start);
     } catch (...) {}
+    if (jacStartShdw != _jac_start) _dirty = true;
 
     ImGui::SameLine();
     ImGui::SetNextItemWidth(inputW);
+    const int jacEndShdw = _jac_end;
     std::string end = std::to_string(_jac_end);
     ImGui::InputText("End", &end, ImGuiInputTextFlags_CharsDecimal);
     try {
         _jac_end = std::stoi(end);
     } catch (...) {}
+    if (jacEndShdw != _jac_end) _dirty = true;
 
     if (!_jp_as_call)
         ImGui::EndDisabled();
 }
 
-void SettingsView::apply() const {
+void SettingsView::apply() {
+    _dirty = false;
+
     const auto config = Config::get();
+    config->setAutoReload(_auto_reload);
     config->setLibPath(_lib_path);
     config->setBootPath(_boot_path);
     config->setGamePath(_game_path);

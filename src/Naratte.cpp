@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include "Config.h"
+#include "Util.h"
 
 Naratte::Naratte() {
     reload();
@@ -63,7 +64,8 @@ bool Naratte::reloadLib() {
     if (_lib_handle)
         dlclose(_lib_handle);
 
-    _lib_handle = dlopen(Config::get()->getLibPath().c_str(), RTLD_LAZY);
+    if (Util::WaitForStableFile(Config::get()->getLibPath()))
+        _lib_handle = dlopen(Config::get()->getLibPath().c_str(), RTLD_LAZY);
     if (!_lib_handle) {
         fprintf(stderr, "Error: %s\n", dlerror());
         return false;
@@ -232,45 +234,60 @@ std::vector<std::pair<int, int>> & Naratte::getCallStack() {
     return _call_stack;
 }
 
-void Naratte::serialize(const std::string &path) {
+void Naratte::serialize(const std::string &path) const {
     std::ofstream os(path, std::ios::binary);
-    if (!os)
-        throw std::runtime_error("Cannot open file for writing: " + path);
+    if (!os) {
+        fprintf(stderr, "Cannot open file: %s\n", path.c_str());
+        return;
+    }
 
-    uint64_t ins_count = _instructions.size();
+    const uint64_t ins_count = _instructions.size();
     os.write(reinterpret_cast<const char*>(&ins_count), sizeof(ins_count));
 
-    for (const auto &ins : _instructions) {
-        os.write(reinterpret_cast<const char*>(ins.op), sizeof(ins.op));
-        os.write(reinterpret_cast<const char*>(&ins.cpu), sizeof(ins.cpu));
+    for (const auto &[op, cpu] : _instructions) {
+        os.write(reinterpret_cast<const char*>(op), sizeof(op));
+        os.write(reinterpret_cast<const char*>(&cpu), sizeof(cpu));
     }
 
-    uint64_t mw_count = _mem_writes.size();
+    const uint64_t mw_count = _mem_writes.size();
     os.write(reinterpret_cast<const char*>(&mw_count), sizeof(mw_count));
 
-    for (const auto &mw : _mem_writes) {
-        os.write(reinterpret_cast<const char*>(&mw.idx),  sizeof(mw.idx));
-        os.write(reinterpret_cast<const char*>(&mw.addr), sizeof(mw.addr));
-        os.write(reinterpret_cast<const char*>(&mw.data), sizeof(mw.data));
+    for (const auto &[idx, addr, data] : _mem_writes) {
+        os.write(reinterpret_cast<const char*>(&idx),  sizeof(idx));
+        os.write(reinterpret_cast<const char*>(&addr), sizeof(addr));
+        os.write(reinterpret_cast<const char*>(&data), sizeof(data));
     }
 
-    if (!os)
-        throw std::runtime_error("Error while writing: " + path);
+    if (!os) {
+        fprintf(stderr, "Error while writing: %s\n", path.c_str());
+        return;
+    }
 }
 
 void Naratte::deserialize(const std::string &path) {
+    _instructions.clear();
+    _mem_writes.clear();
+    _call_stack.clear();
+    _call_labels.clear();
+    _selected = -1;
+    load_labels();
+    Config::get()->Ticks = 0;
+    Config::get()->Pause = true;
+
     std::ifstream is(path, std::ios::binary);
-    if (!is)
-        throw std::runtime_error("Cannot open file for reading: " + path);
+    if (!is) {
+        fprintf(stderr, "Cannot open file: %s\n", path.c_str());
+        return;
+    }
 
     uint64_t ins_count = 0;
     is.read(reinterpret_cast<char*>(&ins_count), sizeof(ins_count));
     _instructions.resize(ins_count);
 
     for (uint64_t i = 0; i < ins_count; ++i) {
-        auto &ins = _instructions[i];
-        is.read(reinterpret_cast<char*>(ins.op), sizeof(ins.op));
-        is.read(reinterpret_cast<char*>(&ins.cpu), sizeof(ins.cpu));
+        auto &[op, cpu] = _instructions[i];
+        is.read(reinterpret_cast<char*>(op), sizeof(op));
+        is.read(reinterpret_cast<char*>(&cpu), sizeof(cpu));
     }
 
     uint64_t mw_count = 0;
@@ -284,8 +301,10 @@ void Naratte::deserialize(const std::string &path) {
         is.read(reinterpret_cast<char*>(&mw.data), sizeof(mw.data));
     }
 
-    if (!is)
-        throw std::runtime_error("Error while reading: " + path);
+    if (!is) {
+        fprintf(stderr, "Error while reading: %s\n", path.c_str());
+        return;
+    }
 }
 
 bool Naratte::is_inf_loop() const {

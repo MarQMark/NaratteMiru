@@ -1,5 +1,6 @@
 #ifndef NARATTEMIRU_CONFIG_H
 #define NARATTEMIRU_CONFIG_H
+#include <ctime>
 #include <string>
 
 
@@ -13,6 +14,10 @@ public:
 
     void load();
     void save() const;
+
+    void setAutoReload(bool enable);
+    bool getAutoReload() const;
+    bool libNaratteChanged();
 
     const std::string& getLibPath();
     const std::string& getBootPath();
@@ -36,6 +41,8 @@ public:
 
     bool dirtyCallStack();
 private:
+    bool _auto_reload = false;
+    std::time_t _last_modified;
     std::string _path_lib{};
     std::string _path_boot{};
     std::string _path_game{};
@@ -44,6 +51,8 @@ private:
     int _jac_start = 0;
     int _jac_end = -1;
     bool _dirty_cs = false;
+
+    static std::time_t last_modified(const std::string& path);
 };
 
 

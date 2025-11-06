@@ -41,6 +41,7 @@ add_executable(NaratteMiru
         src/views/RegisterView.cpp
         src/views/ViewportView.cpp
         src/views/SettingsView.cpp
+        src/views/ExportView.cpp
 )
 target_include_directories(NaratteMiru PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include

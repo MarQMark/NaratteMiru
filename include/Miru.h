@@ -7,6 +7,7 @@
 #include "View.h"
 #include "views/Menubar.h"
 #include "views/AsmView.h"
+#include "views/ExportView.h"
 #include "views/MemoryView.h"
 #include "views/RegisterView.h"
 #include "views/SettingsView.h"
@@ -29,6 +30,7 @@ private:
     RegisterView* _register_view{};
     ViewportView* _viewport_view{};
     SettingsView* _settings_view{};
+    ExportView* _export_view{};
 
     Naratte* _naratte{};
 

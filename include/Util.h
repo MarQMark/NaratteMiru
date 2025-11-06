@@ -4,6 +4,7 @@
 
 
 namespace  Util {
+    bool WaitForStableFile(const std::string& path, int retries = 10);
     std::string OpenExplorer(const std::string& filter, const std::string& title);
 };
 
