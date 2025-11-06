@@ -35,6 +35,7 @@ Miru::~Miru() {
 void Miru::update() {
     if (_menubar->reload()) {
         _menubar->resetReload();
+        Config::get()->load();
         _naratte->reload();
     }
 

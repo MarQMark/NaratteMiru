@@ -23,6 +23,25 @@ void Config::load() {
     std::getline(ifs, _path_lib);
     std::getline(ifs, _path_boot);
     std::getline(ifs, _path_game);
+    std::string var;
+    std::getline(ifs, var);
+    if(!var.empty()) {
+        try {
+            _jp_as_call = std::stoi(var);
+        } catch (...) {}
+    }
+    std::getline(ifs, var);
+    if(!var.empty()) {
+        try {
+            _jac_start = std::stoi(var);
+        } catch (...) {}
+    }
+    std::getline(ifs, var);
+    if(!var.empty()) {
+        try {
+            _jac_end = std::stoi(var);
+        } catch (...) {}
+    }
 }
 
 void Config::save() const {
@@ -33,6 +52,9 @@ void Config::save() const {
     ofs << _path_lib  << "\n";
     ofs << _path_boot << "\n";
     ofs << _path_game << "\n";
+    ofs << _jp_as_call << "\n";
+    ofs << _jac_start << "\n";
+    ofs << _jac_end << "\n";
 }
 
 const std::string & Config::getLibPath() {

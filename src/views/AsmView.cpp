@@ -462,7 +462,7 @@ void AsmView::jump_filter(bool next) {
         start = next ? _selected + 1 : _selected - 1;
     }
     if (_jump_filter.empty()) {
-        for (int i = start; next ? (i < instructions.size()) : (i >= 0); next ? i++ : i--) {
+        for (int i = start; (i < instructions.size()) && (i >= 0); next ? i++ : i--) {
             if (instructions[i].isRet() || instructions[i].isCall() || instructions[i].isJP()) {
                 selection = i;
                 break;
@@ -474,7 +474,7 @@ void AsmView::jump_filter(bool next) {
             selection = std::stoi(_jump_filter);
         }
         catch (...) {
-            for (int i = start; next ? (i < instructions.size()) : (i >= 0); next ? i++ : i--) {
+            for (int i = start; (i < instructions.size()) && (i >= 0); next ? i++ : i--) {
                 std::string name = _naratte->getInstructionName(instructions[i].op);
                 if (name.find(_jump_filter) != std::string::npos) {
                     selection = i;

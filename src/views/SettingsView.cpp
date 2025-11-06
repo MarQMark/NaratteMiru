@@ -73,6 +73,9 @@ void SettingsView::setVisible(const bool visible) {
         _lib_path = Config::get()->getLibPath();
         _boot_path = Config::get()->getBootPath();
         _game_path = Config::get()->getGamePath();
+        _jp_as_call = Config::get()->getJPasCALL();
+        _jac_start = Config::get()->getJaCStart();
+        _jac_end = Config::get()->getJaCEnd();
     }
 
     Viewable::setVisible(visible);

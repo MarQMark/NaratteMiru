@@ -120,7 +120,7 @@ public:
 
     void reload();
     void reloadROM();
-    void reloadLib();
+    bool reloadLib();
     void update();
 
     void rebuildCallStack();
@@ -149,7 +149,12 @@ public:
     };
     std::vector<std::pair<int, int>>& getCallStack();
 
+    void serialize(const std::string& path);
+    void deserialize(const std::string& path);
+
 private:
+    bool _success = false;
+
     int _selected = -1;
     bool _dirty = false;
 
