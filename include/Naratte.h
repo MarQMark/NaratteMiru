@@ -151,6 +151,8 @@ private:
     int _selected = -1;
     bool _dirty = false;
 
+    bool is_inf_loop() const;
+
     std::map<uint16_t, std::string> _call_labels;
     void load_labels();
 
@@ -192,6 +194,7 @@ private:
 
     std::vector<std::pair<int, int>> _call_stack;
     void add_last_call();
+    void rebuild_call_stack();
 };
 
 

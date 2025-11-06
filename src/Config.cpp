@@ -58,3 +58,43 @@ void Config::setBootPath(const std::string &path) {
 void Config::setGamePath(const std::string &path) {
     _path_game = path;
 }
+
+bool Config::getJPasCALL() const {
+    return _jp_as_call;
+}
+
+void Config::setJPasCALL(const bool enabled) {
+    _jp_as_call = enabled;
+    _dirty_cs = true;
+}
+
+int Config::getJaCStart() const {
+    return _jac_start;
+}
+
+int Config::getJaCEnd() const {
+    return _jac_end;
+}
+
+void Config::setJaCStart(const int start) {
+    _jac_start = start;
+    _dirty_cs = true;
+}
+
+void Config::setJaCEnd(const int end) {
+    _jac_end = end;
+    _dirty_cs = true;
+}
+
+bool Config::isJPasCall(const int id, const int max) const {
+    return _jp_as_call && id >= _jac_start && id <= (_jac_end == -1 ? max : _jac_end);
+}
+
+bool Config::dirtyCallStack() {
+    if (_dirty_cs) {
+        _dirty_cs = false;
+        return true;
+    }
+
+    return false;
+}

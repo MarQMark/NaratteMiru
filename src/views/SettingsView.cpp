@@ -117,6 +117,32 @@ void SettingsView::menu_general() {
 }
 
 void SettingsView::menu_format() {
+    ImGui::Text("Treat JP as CALL:");
+    ImGui::Checkbox("##$JAC", &_jp_as_call);
+
+    const auto inputW = (ImGui::GetContentRegionAvail().x - 20) / 3;
+
+    if (!_jp_as_call)
+        ImGui::BeginDisabled();
+
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(inputW);
+    std::string start = std::to_string(_jac_start);
+    ImGui::InputText("Start", &start, ImGuiInputTextFlags_CharsDecimal);
+    try {
+        _jac_start = std::stoi(start);
+    } catch (...) {}
+
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(inputW);
+    std::string end = std::to_string(_jac_end);
+    ImGui::InputText("End", &end, ImGuiInputTextFlags_CharsDecimal);
+    try {
+        _jac_end = std::stoi(end);
+    } catch (...) {}
+
+    if (!_jp_as_call)
+        ImGui::EndDisabled();
 }
 
 void SettingsView::apply() const {
@@ -124,5 +150,10 @@ void SettingsView::apply() const {
     config->setLibPath(_lib_path);
     config->setBootPath(_boot_path);
     config->setGamePath(_game_path);
+
+    config->setJPasCALL(_jp_as_call);
+    config->setJaCStart(_jac_start);
+    config->setJaCEnd(_jac_end);
+
     config->save();
 }

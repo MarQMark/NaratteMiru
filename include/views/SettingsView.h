@@ -20,6 +20,10 @@ private:
     std::string _boot_path{};
     std::string _game_path{};
 
+    bool _jp_as_call = false;
+    int _jac_start = 0;
+    int _jac_end = -1;
+
     void menu_general();
     void menu_format();
 

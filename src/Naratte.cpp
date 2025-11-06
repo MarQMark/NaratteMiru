@@ -117,12 +117,11 @@ void Naratte::reloadLib() {
 
 void Naratte::update() {
     _dirty = false;
+    if (Config::get()->dirtyCallStack())
+        rebuild_call_stack();
 
     for(int i = 0; i < 10000; i++) {
-        if (!_instructions.empty() &&
-            _instructions.back().op[0] == 0x18 &&
-            _instructions.back().op[1] == 0xFE) {
-            printf("Stop\n");
+        if (is_inf_loop()) {
             Config::get()->Ticks = 0;
             break;
         }
@@ -215,6 +214,23 @@ std::vector<std::pair<int, int>> & Naratte::getCallStack() {
     return _call_stack;
 }
 
+bool Naratte::is_inf_loop() const {
+    // JR -2
+    if (!_instructions.empty() &&
+        _instructions.back().op[0] == 0x18 &&
+        _instructions.back().op[1] == 0xFE)
+        return true;
+
+    // JR -3, NOP
+    if (_instructions.size() >= 2 &&
+        _instructions[_instructions.size() - 2].op[0] == 0x18 &&
+        _instructions[_instructions.size() - 2].op[1] == 0xFD &&
+        _instructions.back().op[0] == 0x00)
+        return true;
+
+    return false;
+}
+
 void Naratte::load_labels() {
     std::filesystem::path p = Config::get()->getGamePath();
     p.replace_extension(".sym");
@@ -273,9 +289,20 @@ bool Naratte::query_dl_error() const {
 }
 
 void Naratte::add_last_call() {
-    // TODO: Make is JP dependent on set id val
-    if (const auto instruction = _instructions.back(); instruction.isCall() || instruction.isJP())
+    if (const auto instruction = _instructions.back(); instruction.isCall() ||
+        (instruction.isJP() &&  Config::get()->isJPasCall(_instructions.size() - 1, _instructions.size() - 1)))
         _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, CALL});
     else if (instruction.isRet())
         _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, RET});
+}
+
+void Naratte::rebuild_call_stack() {
+    _call_stack.clear();
+    for (int i = 0; i < _instructions.size(); i++) {
+        if (const auto& instruction = _instructions[i]; instruction.isCall() ||
+           (instruction.isJP() &&  Config::get()->isJPasCall(i, _instructions.size() - 1)))
+            _call_stack.emplace_back(std::pair<int, int>{i, CALL});
+        else if (instruction.isRet())
+            _call_stack.emplace_back(std::pair<int, int>{i, RET});
+    }
 }

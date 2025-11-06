@@ -4,6 +4,7 @@
 #include <ranges>
 #include <sstream>
 
+#include "Config.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -237,7 +238,7 @@ void AsmView::render_format() {
     auto height = ImGui::GetContentRegionAvail().y;
     if (ImGui::BeginListBox("##instr_list", ImVec2(-FLT_MIN, height - 21))) {
         auto& instructions = _naratte->getInstructions();
-        for (int i = _start; i <instructions.size(); i++) {
+        for (int i = _start; i < instructions.size(); i++) {
             render_node(i, 0);
         }
 
@@ -269,8 +270,8 @@ bool AsmView::render_node(int& id, int depth) {
     // No pattern detected
     if (end == id) {
 
-        // TODO: Make is JP dependent on set id val
-        if (instructions[id].isCall() || instructions[id].isJP()) {
+        if (instructions[id].isCall() ||
+           (instructions[id].isJP() &&  Config::get()->isJPasCall(id, instructions.size() - 1))) {
             if (_selected > id && _selected <= get_ret_from_call(id))
                 ImGui::SetNextItemOpen(true, ImGuiCond_Always);
 
