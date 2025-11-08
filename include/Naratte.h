@@ -163,6 +163,8 @@ private:
     std::map<uint16_t, std::string> _call_labels;
     void load_labels();
 
+    std::map<std::string, std::string> _symbols;
+    void load_symbols();
     void* _lib_handle{};
 
     bool query_dl_error() const;
@@ -179,7 +181,6 @@ private:
 
     void (*naratte_get_ic)(void *cpu, uint8_t* ic){};
     char* (*naratte_disassemble)(void* dasm, uint8_t *ins){};
-    char* (*naratte_disassemble_cpu)(void* cpu, void* dasm){};
 
     void (*naratte_free_d)(void** cpu, void** ppu, void** dasm){};
 

@@ -10,6 +10,7 @@
 #include "Util.h"
 
 Naratte::Naratte() {
+    load_symbols();
     reload();
 }
 
@@ -52,7 +53,6 @@ bool Naratte::reloadLib() {
     naratte_tick = nullptr;
     naratte_get_ic = nullptr;
     naratte_disassemble = nullptr;
-    naratte_disassemble_cpu = nullptr;
     naratte_free_d = nullptr;
     naratte_get_mc = nullptr;
     naratte_init_pseudo_mem = nullptr;
@@ -73,33 +73,31 @@ bool Naratte::reloadLib() {
 
     dlerror();
 
-    naratte_init_d          = reinterpret_cast<int8_t (*)(void**, void**, void**)>(dlsym(_lib_handle, "naratte_init_d"));
+    naratte_init_d          = reinterpret_cast<int8_t (*)(void**, void**, void**)>(dlsym(_lib_handle, _symbols["Init"].c_str()));
     if (query_dl_error()) return false;
-    naratte_load_rom        = reinterpret_cast<int8_t (*)(void*, const char*, const char*)>(dlsym(_lib_handle, "naratte_load_rom"));
+    naratte_load_rom        = reinterpret_cast<int8_t (*)(void*, const char*, const char*)>(dlsym(_lib_handle, _symbols["LoadRom"].c_str()));
     if (query_dl_error()) return false;
-    naratte_tick            = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, "naratte_tick"));
+    naratte_tick            = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, _symbols["Tick"].c_str()));
     if (query_dl_error()) return false;
-    naratte_get_ic          = reinterpret_cast<void   (*)(void*, uint8_t*)>(dlsym(_lib_handle, "naratte_get_ic"));
+    naratte_get_ic          = reinterpret_cast<void   (*)(void*, uint8_t*)>(dlsym(_lib_handle, _symbols["GetInstructionCache"].c_str()));
     if (query_dl_error()) return false;
-    naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*)>(dlsym(_lib_handle, "naratte_disassemble"));
+    naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*)>(dlsym(_lib_handle, _symbols["Disassemble"].c_str()));
     if (query_dl_error()) return false;
-    naratte_disassemble_cpu = reinterpret_cast<char*  (*)(void*, void*)>(dlsym(_lib_handle, "naratte_disassemble_cpu"));
-    if (query_dl_error()) return false;
-    naratte_free_d          = reinterpret_cast<void   (*)(void**, void**, void**)>(dlsym(_lib_handle, "naratte_free_d"));
+    naratte_free_d          = reinterpret_cast<void   (*)(void**, void**, void**)>(dlsym(_lib_handle, _symbols["Free"].c_str()));
     if (query_dl_error()) return false;
 
-    naratte_get_mc          = reinterpret_cast<struct mem_change* (*)(void*)>(dlsym(_lib_handle, "naratte_get_mc"));
+    naratte_get_mc          = reinterpret_cast<struct mem_change* (*)(void*)>(dlsym(_lib_handle, _symbols["GetMemoryChange"].c_str()));
     if (query_dl_error()) return false;
-    naratte_init_pseudo_mem = reinterpret_cast<int8_t (*)(void**, const char*, const char*)>(dlsym(_lib_handle, "naratte_init_pseudo_mem"));
+    naratte_init_pseudo_mem = reinterpret_cast<int8_t (*)(void**, const char*, const char*)>(dlsym(_lib_handle, _symbols["InitPseudoRam"].c_str()));
     if (query_dl_error()) return false;
-    naratte_free_pseudo_mem = reinterpret_cast<void   (*)(void**)>(dlsym(_lib_handle, "naratte_free_pseudo_mem"));
+    naratte_free_pseudo_mem = reinterpret_cast<void   (*)(void**)>(dlsym(_lib_handle, _symbols["FreePseudoRam"].c_str()));
     if (query_dl_error()) return false;
-    mem_read                = reinterpret_cast<uint8_t(*)(void*, uint16_t)>(dlsym(_lib_handle, "mem_read"));
+    mem_read                = reinterpret_cast<uint8_t(*)(void*, uint16_t)>(dlsym(_lib_handle, _symbols["MemoryRead"].c_str()));
     if (query_dl_error()) return false;
-    mem_write               = reinterpret_cast<void   (*)(void*, uint16_t, uint8_t)>(dlsym(_lib_handle, "mem_write"));
+    mem_write               = reinterpret_cast<void   (*)(void*, uint16_t, uint8_t)>(dlsym(_lib_handle, _symbols["MemoryWrite"].c_str()));
     if (query_dl_error()) return false;
 
-    ppu_draw                = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, "ppu_draw"));
+    ppu_draw                = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, _symbols["PPUDraw"].c_str()));
     if (query_dl_error()) return false;
 
     if(!naratte_init_d(&_cpu, &_ppu, &_dasm)) {
@@ -368,6 +366,53 @@ void Naratte::load_labels() {
             _call_labels[static_cast<uint16_t>(std::stoul(offStr, nullptr, 16))]  = name;
         } catch (...) {
         }
+    }
+}
+
+void Naratte::load_symbols() {
+    _symbols["Init"] = "naratte_init_d";
+    _symbols["LoadRom"] = "naratte_load_rom";
+    _symbols["Tick"] = "naratte_tick";
+    _symbols["GetInstructionCache"] = "naratte_get_ic";
+    _symbols["Disassemble"] = "naratte_disassemble";
+    _symbols["Free"] = "naratte_free_d";
+    _symbols["GetMemoryChange"] = "naratte_get_mc";
+    _symbols["InitPseudoRam"] = "naratte_init_pseudo_mem";
+    _symbols["FreePseudoRam"] = "naratte_free_pseudo_mem";
+    _symbols["MemoryRead"] = "mem_read";
+    _symbols["MemoryWrite"] = "mem_write";
+    _symbols["PPUDraw"] = "ppu_draw";
+
+    const std::string path = "symbols.conf";
+    if (!std::filesystem::exists(path))
+        return;
+    std::ifstream file(path);
+    if (!file.is_open())
+        return;
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty())
+            continue;
+        if (line[0] == '#')
+            continue;
+        const auto pos = line.find(':');
+        if (pos == std::string::npos)
+            continue;
+
+        std::string key  = line.substr(0, pos);
+        std::string name = line.substr(pos + 1);
+
+        auto trim = [](std::string& s) {
+            const auto ws = " \t\n\r";
+            s.erase(0, s.find_first_not_of(ws));
+            s.erase(s.find_last_not_of(ws) + 1);
+        };
+
+        trim(key);
+        trim(name);
+
+        if (!key.empty() && !name.empty())
+            _symbols[key] = name;
     }
 }
 
