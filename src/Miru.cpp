@@ -14,6 +14,7 @@ Miru::Miru() {
     _viewport_view = new ViewportView(_naratte);
     _settings_view = new SettingsView();
     _export_view = new ExportView(_naratte);
+    _cartridge_info_view = new CartridgeInfoView(_naratte);
 
     _view->addViewable(_menubar, "Menubar");
     _view->addViewable(_asm_view, "Assembly");
@@ -22,6 +23,7 @@ Miru::Miru() {
     _view->addViewable(_viewport_view, "Viewport");
     _view->addViewable(_settings_view, "Settings");
     _view->addViewable(_export_view, "Export");
+    _view->addViewable(_cartridge_info_view, "Cartridge Info");
 }
 
 Miru::~Miru() {

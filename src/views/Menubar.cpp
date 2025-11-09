@@ -27,6 +27,8 @@ void Menubar::render() {
                     if (!path.empty())
                         _naratte->deserialize(path);
                 }
+                if (ImGui::MenuItem("Cartridge Info"))
+                    static_cast<View *>(view)->getViewable("Cartridge Info")->setVisible(true);
                 if (ImGui::MenuItem("Exit"))
                     exit(1);
 
