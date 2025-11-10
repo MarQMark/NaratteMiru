@@ -129,14 +129,19 @@ void Naratte::update() {
             break;
         }
 
-        _instructions.emplace_back(Instruction{{0xDD, 0xDD, 0xDD, 0x0}});
-        naratte_get_ic(_cpu, _instructions.back().op);
-        memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
-        add_last_call();
+        if (Config::get()->isMonitored()) {
+            _instructions.emplace_back(Instruction{{0xDD, 0xDD, 0xDD, 0x0}});
+            naratte_get_ic(_cpu, _instructions.back().op);
+            memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
+            add_last_call();
+        }
+
         naratte_tick(_cpu, _ppu);
 
-        for (const mem_change* change = naratte_get_mc(_cpu); change != nullptr; change = change->next) {
-            _mem_writes.emplace_back(MemWrites{_instructions.size() - 1, change->addr, change->data});
+        if (Config::get()->isMonitored()) {
+            for (const mem_change* change = naratte_get_mc(_cpu); change != nullptr; change = change->next) {
+                _mem_writes.emplace_back(MemWrites{_instructions.size() - 1, change->addr, change->data});
+            }
         }
     }
 }

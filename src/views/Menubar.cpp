@@ -54,6 +54,12 @@ void Menubar::render() {
             if (ImGui::Button(Config::get()->Pause ? "Resume" : "Pause")) {
                 Config::get()->Pause = !Config::get()->Pause;
             }
+
+            ImGui::Dummy(ImVec2(2, 0));
+            bool monitor = Config::get()->isMonitored();
+            ImGui::Checkbox("Monitor", &monitor);
+            Config::get()->setMonitored(monitor);
+
             ImGui::EndMenuBar();
         }
         ImGui::End();

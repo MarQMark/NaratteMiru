@@ -53,6 +53,12 @@ void Config::load() {
             _jac_end = std::stoi(var);
         } catch (...) {}
     }
+    std::getline(ifs, var);
+    if(!var.empty()) {
+        try {
+            _monitor = std::stoi(var);
+        } catch (...) {}
+    }
 }
 
 void Config::save() const {
@@ -67,6 +73,7 @@ void Config::save() const {
     ofs << _jp_as_call << "\n";
     ofs << _jac_start << "\n";
     ofs << _jac_end << "\n";
+    ofs << _monitor << "\n";
 }
 
 const std::string & Config::getLibPath() {
@@ -145,6 +152,20 @@ void Config::setJaCEnd(const int end) {
 
 bool Config::isJPasCall(const int id, const int max) const {
     return _jp_as_call && id >= _jac_start && id <= (_jac_end < 0 ? max : _jac_end);
+}
+
+bool Config::isMonitored() const {
+    return _monitor;
+}
+
+void Config::setMonitored(const bool enable) {
+    if (enable != _monitor) {
+        _monitor = enable;
+        save();
+    }
+    else {
+        _monitor = enable;
+    }
 }
 
 bool Config::dirtyCallStack() {

@@ -37,6 +37,9 @@ public:
 
     int Ticks = 1000;
 
+    bool isMonitored() const;
+    void setMonitored(bool enable);
+
     bool Pause = false;
 
     bool dirtyCallStack();
@@ -51,6 +54,8 @@ private:
     int _jac_start = 0;
     int _jac_end = -1;
     bool _dirty_cs = false;
+
+    bool _monitor = true;
 
     static std::time_t last_modified(const std::string& path);
 };
