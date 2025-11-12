@@ -199,6 +199,6 @@ std::time_t Config::last_modified(const std::string &path) {
     if (ec)
         return -1;
 
-    const auto sctp = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+    const auto sctp = std::chrono::file_clock::to_sys(ftime);
     return std::chrono::system_clock::to_time_t(sctp);
 }

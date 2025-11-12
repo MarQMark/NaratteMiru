@@ -94,9 +94,9 @@ void Menubar::render() {
                     const bool pressed = ImGui::IsKeyDown(keys[i]);
 
                     if (pressed)
-                        Config::get()->Joypad |=  (1u << i);
+                        Config::get()->Joypad |=  (1u << (7 - i));
                     else
-                        Config::get()->Joypad &= ~(1u << i);
+                        Config::get()->Joypad &= ~(1u << (7 - i));
 
                     ImVec4 col = pressed ? green : default_col;
                     ImGui::TextColored(col, "%s", letters[i]);
