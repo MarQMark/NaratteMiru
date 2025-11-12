@@ -114,8 +114,6 @@ bool Naratte::reloadLib() {
 
     reloadPseudoMem(0);
 
-    ((uint8_t*)_cpu)[4137] = 1;
-
     return true;
 }
 

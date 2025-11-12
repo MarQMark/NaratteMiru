@@ -63,13 +63,15 @@ void AsmView::render() {
     if (ctrl && ImGui::IsKeyPressed(ImGuiKey_UpArrow))
         jump_filter(false);
     else if (ImGui::IsKeyPressed(ImGuiKey_UpArrow)) {
-        _selected = (_selected - 1) < 0 ? ((int)_naratte->getInstructions().size() - 1) : _selected - 1;
+        if (!_naratte->getInstructions().empty())
+            _selected = (_selected - 1) < 0 ? ((int)_naratte->getInstructions().size() - 1) : _selected - 1;
         _jump_to = true;
     }
     if (ctrl && ImGui::IsKeyPressed(ImGuiKey_DownArrow))
         jump_filter(true);
     else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) {
-        _selected = (_selected + 1) % (int)_naratte->getInstructions().size();
+        if (!_naratte->getInstructions().empty())
+            _selected = (_selected + 1) % (int)_naratte->getInstructions().size();
         _jump_to = true;
     }
     if (ctrl && ImGui::IsKeyPressed(ImGuiKey_R))
