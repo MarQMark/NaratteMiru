@@ -1,5 +1,6 @@
 #ifndef NARATTEMIRU_CONFIG_H
 #define NARATTEMIRU_CONFIG_H
+#include <cstdint>
 #include <ctime>
 #include <string>
 
@@ -40,9 +41,15 @@ public:
     bool isMonitored() const;
     void setMonitored(bool enable);
 
+    bool isViewportFixed() const;
+    void setViewportFixed(bool fixed);
+
     bool Pause = false;
 
     bool dirtyCallStack();
+
+    uint8_t Joypad = 0;
+
 private:
     bool _auto_reload = false;
     std::time_t _last_modified;
@@ -56,6 +63,7 @@ private:
     bool _dirty_cs = false;
 
     bool _monitor = true;
+    bool _viewport_fixed = true;
 
     static std::time_t last_modified(const std::string& path);
 };

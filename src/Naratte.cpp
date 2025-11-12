@@ -79,6 +79,8 @@ bool Naratte::reloadLib() {
     if (query_dl_error()) return false;
     naratte_tick            = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, _symbols["Tick"].c_str()));
     if (query_dl_error()) return false;
+    naratte_input           = reinterpret_cast<void   (*)(void*, uint8_t)>(dlsym(_lib_handle, _symbols["Input"].c_str()));
+    if (query_dl_error()) return false;
     naratte_get_ic          = reinterpret_cast<void   (*)(void*, uint8_t*)>(dlsym(_lib_handle, _symbols["GetInstructionCache"].c_str()));
     if (query_dl_error()) return false;
     naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*)>(dlsym(_lib_handle, _symbols["Disassemble"].c_str()));
@@ -136,6 +138,7 @@ void Naratte::update() {
             add_last_call();
         }
 
+        naratte_input(_cpu, Config::get()->Joypad);
         naratte_tick(_cpu, _ppu);
 
         if (Config::get()->isMonitored()) {
@@ -378,6 +381,7 @@ void Naratte::load_symbols() {
     _symbols["Init"] = "naratte_init_d";
     _symbols["LoadRom"] = "naratte_load_rom";
     _symbols["Tick"] = "naratte_tick";
+    _symbols["Input"] = "naratte_input";
     _symbols["GetInstructionCache"] = "naratte_get_ic";
     _symbols["Disassemble"] = "naratte_disassemble";
     _symbols["Free"] = "naratte_free_d";

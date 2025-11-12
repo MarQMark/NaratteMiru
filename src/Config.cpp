@@ -4,14 +4,14 @@
 #include <filesystem>
 #include <fstream>
 
-Config* Config::s_instance = nullptr;
-
 Config::Config() {
     load();
 
     if (_auto_reload)
         _last_modified = last_modified(_path_lib);
 }
+
+Config* Config::s_instance = nullptr;
 
 Config* Config::get() {
     if (!s_instance)
@@ -59,6 +59,12 @@ void Config::load() {
             _monitor = std::stoi(var);
         } catch (...) {}
     }
+    std::getline(ifs, var);
+    if(!var.empty()) {
+        try {
+            _viewport_fixed = std::stoi(var);
+        } catch (...) {}
+    }
 }
 
 void Config::save() const {
@@ -74,18 +80,7 @@ void Config::save() const {
     ofs << _jac_start << "\n";
     ofs << _jac_end << "\n";
     ofs << _monitor << "\n";
-}
-
-const std::string & Config::getLibPath() {
-    return _path_lib;
-}
-
-const std::string & Config::getBootPath() {
-    return _path_boot;
-}
-
-const std::string & Config::getGamePath() {
-    return _path_game;
+    ofs << _viewport_fixed << "\n";
 }
 
 void Config::setAutoReload(const bool enable) {
@@ -109,6 +104,18 @@ bool Config::libNaratteChanged() {
     }
 
     return false;
+}
+
+const std::string & Config::getLibPath() {
+    return _path_lib;
+}
+
+const std::string & Config::getBootPath() {
+    return _path_boot;
+}
+
+const std::string & Config::getGamePath() {
+    return _path_game;
 }
 
 void Config::setLibPath(const std::string &path) {
@@ -166,6 +173,14 @@ void Config::setMonitored(const bool enable) {
     else {
         _monitor = enable;
     }
+}
+
+bool Config::isViewportFixed() const {
+    return _viewport_fixed;
+}
+
+void Config::setViewportFixed(const bool fixed) {
+    _viewport_fixed = fixed;
 }
 
 bool Config::dirtyCallStack() {

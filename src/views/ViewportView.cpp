@@ -1,5 +1,6 @@
 #include "views/ViewportView.h"
 
+#include "Config.h"
 #include "imgui.h"
 
 ViewportView::ViewportView(Naratte* naratte) : _naratte(naratte) {
@@ -42,7 +43,8 @@ void ViewportView::render() {
         draw_width  = avail.y * tex_aspect;
     }
 
-    draw_height = draw_width = 255*1;
+    if (Config::get()->isViewportFixed())
+        draw_height = draw_width = 255*1;
 
     // compute centered position
     ImVec2 cursor = ImGui::GetCursorScreenPos();

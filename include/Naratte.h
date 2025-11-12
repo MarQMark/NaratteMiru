@@ -178,6 +178,7 @@ private:
     int8_t (*naratte_load_rom)(void* cpu, const char* boot, const char* game){};
 
     void (*naratte_tick)(void* cpu, void* ppu){};
+    void (*naratte_input)(void* cpu, uint8_t);
 
     void (*naratte_get_ic)(void *cpu, uint8_t* ic){};
     char* (*naratte_disassemble)(void* dasm, uint8_t *ins){};

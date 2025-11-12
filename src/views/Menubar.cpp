@@ -60,6 +60,53 @@ void Menubar::render() {
             ImGui::Checkbox("Monitor", &monitor);
             Config::get()->setMonitored(monitor);
 
+
+            {
+                const char* letters[] = { "S", "s", "B", "A", "D", "U", "L", "R" };
+                ImGuiKey keys[] = {
+                    ImGuiKey_T, ImGuiKey_Y, ImGuiKey_L, ImGuiKey_K,
+                    ImGuiKey_S, ImGuiKey_W, ImGuiKey_A, ImGuiKey_D
+                };
+
+                const ImGuiStyle& style = ImGui::GetStyle();
+
+                constexpr float spacing = 8.0f;
+                float total_width = 0.0f;
+                for (int i = 0; i < IM_ARRAYSIZE(letters); ++i) {
+                    const ImVec2 ts = ImGui::CalcTextSize(letters[i]);
+                    total_width += ts.x;
+                    if (i + 1 < IM_ARRAYSIZE(letters)) total_width += spacing;
+                }
+
+                const float window_width = ImGui::GetWindowWidth();
+                const float padding_right = style.FramePadding.x + 8.0f;
+                const float start_x = window_width - total_width - padding_right;
+                if (start_x > ImGui::GetCursorPosX()) {
+                    ImGui::SameLine(start_x);
+                } else {
+                    ImGui::SameLine();
+                }
+
+                constexpr auto green = ImVec4(0.2f, 0.85f, 0.2f, 1.0f);
+                const ImVec4 default_col = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+
+                for (int i = 0; i < IM_ARRAYSIZE(letters); ++i) {
+                    const bool pressed = ImGui::IsKeyDown(keys[i]);
+
+                    if (pressed)
+                        Config::get()->Joypad |=  (1u << i);
+                    else
+                        Config::get()->Joypad &= ~(1u << i);
+
+                    ImVec4 col = pressed ? green : default_col;
+                    ImGui::TextColored(col, "%s", letters[i]);
+
+                    if (i + 1 < IM_ARRAYSIZE(letters)) {
+                        ImGui::SameLine(0.0f, spacing);
+                    }
+                }
+            }
+
             ImGui::EndMenuBar();
         }
         ImGui::End();

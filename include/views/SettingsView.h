@@ -23,6 +23,8 @@ private:
     std::string _boot_path{};
     std::string _game_path{};
 
+    bool _viewport_fixed = true;
+
     bool _jp_as_call = false;
     int _jac_start = 0;
     int _jac_end = -1;
