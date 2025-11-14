@@ -12,6 +12,7 @@
 #include "views/MemoryView.h"
 #include "views/RegisterView.h"
 #include "views/SettingsView.h"
+#include "views/TileView.h"
 #include "views/ViewportView.h"
 
 class Miru {
@@ -33,6 +34,7 @@ private:
     SettingsView* _settings_view{};
     ExportView* _export_view{};
     CartridgeInfoView* _cartridge_info_view{};
+    TileView* _tile_view{};
 
     Naratte* _naratte{};
 

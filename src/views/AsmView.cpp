@@ -76,6 +76,8 @@ void AsmView::render() {
     }
     if (ctrl && ImGui::IsKeyPressed(ImGuiKey_R))
         _naratte->reload();
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_Q))
+        _selected = -1;
 
     ImGui::Separator();
 

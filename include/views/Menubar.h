@@ -22,6 +22,7 @@ private:
     bool _memory_view = true;
     bool _register_view = true;
     bool _viewport_view = true;
+    bool _tile_view = true;
 
     void add_menu_view(const std::string& name, bool* enabled) const;
 

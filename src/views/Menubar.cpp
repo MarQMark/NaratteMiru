@@ -39,6 +39,7 @@ void Menubar::render() {
                 add_menu_view("Memory", &_memory_view);
                 add_menu_view("Registers", &_register_view);
                 add_menu_view("Viewport", &_viewport_view);
+                add_menu_view("Tiles", &_tile_view);
 
                 ImGui::EndMenu();
             }

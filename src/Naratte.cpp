@@ -16,7 +16,7 @@ Naratte::Naratte() {
 
 Naratte::~Naratte() {
     if (naratte_free_d)
-        naratte_free_d(&_cpu, &_ppu, &_dasm);
+        naratte_free_d(&_cpu, &_mem, &_ppu, &_dasm);
 }
 
 void Naratte::reload() {
@@ -40,7 +40,7 @@ bool Naratte::reloadLib() {
     _call_stack.clear();
 
     if (naratte_free_d)
-        naratte_free_d(&_cpu, &_ppu, &_dasm);
+        naratte_free_d(&_cpu, &_mem, &_ppu, &_dasm);
     if (naratte_free_pseudo_mem && _pseudo_mem)
         naratte_free_pseudo_mem(&_pseudo_mem);
 
@@ -73,7 +73,7 @@ bool Naratte::reloadLib() {
 
     dlerror();
 
-    naratte_init_d          = reinterpret_cast<int8_t (*)(void**, void**, void**)>(dlsym(_lib_handle, _symbols["Init"].c_str()));
+    naratte_init_d          = reinterpret_cast<int8_t (*)(void**, void**, void**, void**)>(dlsym(_lib_handle, _symbols["Init"].c_str()));
     if (query_dl_error()) return false;
     naratte_load_rom        = reinterpret_cast<int8_t (*)(void*, const char*, const char*)>(dlsym(_lib_handle, _symbols["LoadRom"].c_str()));
     if (query_dl_error()) return false;
@@ -85,10 +85,12 @@ bool Naratte::reloadLib() {
     if (query_dl_error()) return false;
     naratte_disassemble     = reinterpret_cast<char*  (*)(void*, uint8_t*)>(dlsym(_lib_handle, _symbols["Disassemble"].c_str()));
     if (query_dl_error()) return false;
-    naratte_free_d          = reinterpret_cast<void   (*)(void**, void**, void**)>(dlsym(_lib_handle, _symbols["Free"].c_str()));
+    naratte_free_d          = reinterpret_cast<void   (*)(void**, void**, void**, void**)>(dlsym(_lib_handle, _symbols["Free"].c_str()));
     if (query_dl_error()) return false;
 
     naratte_get_mc          = reinterpret_cast<struct mem_change* (*)(void*)>(dlsym(_lib_handle, _symbols["GetMemoryChange"].c_str()));
+    if (query_dl_error()) return false;
+    naratte_mc_enable       = reinterpret_cast<void (*)(void*, uint8_t)>(dlsym(_lib_handle, _symbols["EnableMemoryChange"].c_str()));
     if (query_dl_error()) return false;
     naratte_init_pseudo_mem = reinterpret_cast<int8_t (*)(void**, const char*, const char*)>(dlsym(_lib_handle, _symbols["InitPseudoRam"].c_str()));
     if (query_dl_error()) return false;
@@ -102,12 +104,12 @@ bool Naratte::reloadLib() {
     ppu_draw                = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, _symbols["PPUDraw"].c_str()));
     if (query_dl_error()) return false;
 
-    if(!naratte_init_d(&_cpu, &_ppu, &_dasm)) {
+    if(!naratte_init_d(&_cpu, &_mem, &_ppu, &_dasm)) {
         fprintf(stderr, "Error init naratte debug\n");
         return false;
     }
 
-    if(!naratte_load_rom(_cpu, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
+    if(!naratte_load_rom(_mem, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
         fprintf(stderr, "Error loading ROMs\n");
         return false;
     }
@@ -140,7 +142,7 @@ void Naratte::update() {
         naratte_tick(_cpu, _ppu);
 
         if (Config::get()->isMonitored()) {
-            for (const mem_change* change = naratte_get_mc(_cpu); change != nullptr; change = change->next) {
+            for (const mem_change* change = naratte_get_mc(_mem); change != nullptr; change = change->next) {
                 _mem_writes.emplace_back(MemWrites{_instructions.size() - 1, change->addr, change->data});
             }
         }
@@ -192,11 +194,34 @@ uint8_t Naratte::readPseudoMem(const uint16_t addr) const {
     if(!_success)
         return 0x00;
 
+    if (_selected < 0)
+        return mem_read(_mem, addr);
+
     return mem_read(_pseudo_mem, addr);
+}
+
+void Naratte::writePseudoMem(const uint16_t addr, const uint8_t data) const {
+    if(!_success)
+        return;
+
+    if (_selected < 0)
+        return mem_write(_mem, addr, data);
+
+    return mem_write(_pseudo_mem, addr, data);
 }
 
 void* Naratte::getPseudoMem() const {
     return _pseudo_mem;
+}
+
+void Naratte::enableMemChange(const bool enable) const {
+    if(!_success)
+        return;
+
+    if (_selected < 0)
+        return naratte_mc_enable(_mem, enable ? 1 : 0);
+
+    return naratte_mc_enable(_pseudo_mem, enable ? 1 : 0);
 }
 
 void Naratte::setSelected(const int selected) {
@@ -384,6 +409,7 @@ void Naratte::load_symbols() {
     _symbols["Disassemble"] = "naratte_disassemble";
     _symbols["Free"] = "naratte_free_d";
     _symbols["GetMemoryChange"] = "naratte_get_mc";
+    _symbols["EnableMemoryChange"] = "naratte_mc_enable";
     _symbols["InitPseudoRam"] = "naratte_init_pseudo_mem";
     _symbols["FreePseudoRam"] = "naratte_free_pseudo_mem";
     _symbols["MemoryRead"] = "mem_read";

@@ -133,7 +133,9 @@ public:
 
     void reloadPseudoMem(size_t iId);
     uint8_t readPseudoMem(uint16_t addr) const;
+    void writePseudoMem(uint16_t addr, uint8_t data) const;
     void* getPseudoMem() const;
+    void enableMemChange(bool enable) const;
 
     void setSelected(int selected);
     int getSelected() const;
@@ -170,12 +172,13 @@ private:
     bool query_dl_error() const;
 
     void* _cpu{};
+    void* _mem{};
     void* _ppu{};
     void* _dasm{};
     void* _pseudo_mem{};
 
-    int8_t (*naratte_init_d)(void** cpu, void** ppu, void** dasm){};
-    int8_t (*naratte_load_rom)(void* cpu, const char* boot, const char* game){};
+    int8_t (*naratte_init_d)(void** cpu, void** mem, void** ppu, void** dasm){};
+    int8_t (*naratte_load_rom)(void* mem, const char* boot, const char* game){};
 
     void (*naratte_tick)(void* cpu, void* ppu){};
     void (*naratte_input)(void* cpu, uint8_t);
@@ -183,14 +186,15 @@ private:
     void (*naratte_get_ic)(void *cpu, uint8_t* ic){};
     char* (*naratte_disassemble)(void* dasm, uint8_t *ins){};
 
-    void (*naratte_free_d)(void** cpu, void** ppu, void** dasm){};
+    void (*naratte_free_d)(void** cpu, void** mem, void** ppu, void** dasm){};
 
     struct mem_change {
         struct mem_change* next;
         uint16_t addr;
         uint8_t data;
     };
-    struct mem_change* (*naratte_get_mc)(void* cpu){};
+    struct mem_change* (*naratte_get_mc)(void* mem){};
+    void (*naratte_mc_enable)(void* mem, uint8_t enable){};
     int8_t (*naratte_init_pseudo_mem)(void** mem, const char* boot, const char* game){};
     void (*naratte_free_pseudo_mem)(void** mem){};
     uint8_t (*mem_read)(void* mem, uint16_t addr){};
