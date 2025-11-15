@@ -26,16 +26,19 @@ void CartridgeInfoView::render() {
             ImGui::Text("Manufacturer Code [013F, 0142]");
             ImGui::Text("  %02X %02X %02X %02X", read_mem(0x013F), read_mem(0x0140), read_mem(0x0141), read_mem(0x0142));
             ImGui::Dummy(ImVec2(0, 5));
-
-            ImGui::Text("CBC Flag [0143]");
-            ImGui::Text("  %02X:", read_mem(0x0143));
-            ImGui::SameLine();
-            if (read_mem(0x0143) == 0x80)
-                ImGui::Text("Supports CBG, backwards compatible");
-            else if (read_mem(0x0143) == 0xC0)
-                ImGui::Text("CBG only");
-            ImGui::Dummy(ImVec2(0, 5));
         }
+
+        ImGui::Text("CBC Flag [0143]");
+        ImGui::Text("  %02X:", read_mem(0x0143));
+        ImGui::SameLine();
+        if (read_mem(0x0143) == 0x80)
+            ImGui::Text("Supports CBG, backwards compatible");
+        else if (read_mem(0x0143) == 0xC0)
+            ImGui::Text("CBG only");
+        else
+            ImGui::Text("DMG ROM");
+        ImGui::Dummy(ImVec2(0, 5));
+
 
         if (read_mem(0x014B) == 0x33) {
             ImGui::Text("New licensee code [0144, 0145]");
