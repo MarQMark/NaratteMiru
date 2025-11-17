@@ -40,6 +40,7 @@ void Menubar::render() {
                 add_menu_view("Registers", &_register_view);
                 add_menu_view("Viewport", &_viewport_view);
                 add_menu_view("Tiles", &_tile_view);
+                add_menu_view("Roms", &_rom_view);
 
                 ImGui::EndMenu();
             }
@@ -49,7 +50,7 @@ void Menubar::render() {
             ImGui::Dummy(ImVec2(5, 0));
 
             if (ImGui::Button("Reload")) {
-                _reload = true;
+                Config::get()->Reload = true;
             }
             ImGui::Dummy(ImVec2(2, 0));
             if (ImGui::Button(Config::get()->Pause ? "Resume" : "Pause")) {
@@ -112,14 +113,6 @@ void Menubar::render() {
         }
         ImGui::End();
     }
-}
-
-bool Menubar::reload() const {
-    return _reload;
-}
-
-void Menubar::resetReload() {
-    _reload = false;
 }
 
 void Menubar::add_menu_view(const std::string &name, bool *enabled) const {

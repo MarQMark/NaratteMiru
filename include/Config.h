@@ -45,6 +45,7 @@ public:
     void setViewportFixed(bool fixed);
 
     bool Pause = false;
+    bool Reload = false;
 
     bool dirtyCallStack();
 

@@ -16,6 +16,7 @@ Miru::Miru() {
     _export_view = new ExportView(_naratte);
     _cartridge_info_view = new CartridgeInfoView(_naratte);
     _tile_view = new TileView(_naratte);
+    _rom_view = new ROMView(_naratte);
 
     _view->addViewable(_menubar, "Menubar");
     _view->addViewable(_asm_view, "Assembly");
@@ -26,6 +27,7 @@ Miru::Miru() {
     _view->addViewable(_export_view, "Export");
     _view->addViewable(_cartridge_info_view, "Cartridge Info");
     _view->addViewable(_tile_view, "Tiles");
+    _view->addViewable(_rom_view, "ROMs");
 }
 
 Miru::~Miru() {
@@ -39,10 +41,11 @@ Miru::~Miru() {
 }
 
 void Miru::update() {
-    if (_menubar->reload() || Config::get()->libNaratteChanged()) {
-        _menubar->resetReload();
+    if (Config::get()->Reload || Config::get()->libNaratteChanged()) {
         Config::get()->load();
         _naratte->reload();
+
+        Config::get()->Reload = false;
     }
 
     if (Config::get()->dirtyCallStack())

@@ -11,6 +11,7 @@
 #include "views/ExportView.h"
 #include "views/MemoryView.h"
 #include "views/RegisterView.h"
+#include "views/ROMView.h"
 #include "views/SettingsView.h"
 #include "views/TileView.h"
 #include "views/ViewportView.h"
@@ -35,6 +36,7 @@ private:
     ExportView* _export_view{};
     CartridgeInfoView* _cartridge_info_view{};
     TileView* _tile_view{};
+    ROMView* _rom_view{};
 
     Naratte* _naratte{};
 

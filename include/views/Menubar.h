@@ -12,9 +12,6 @@ public:
 
     void render() override;
 
-    bool reload() const;
-    void resetReload();
-
 private:
     Naratte* _naratte{};
 
@@ -23,10 +20,9 @@ private:
     bool _register_view = true;
     bool _viewport_view = true;
     bool _tile_view = true;
+    bool _rom_view = true;
 
     void add_menu_view(const std::string& name, bool* enabled) const;
-
-    bool _reload = false;
 };
 
 
