@@ -77,7 +77,7 @@ bool Naratte::reloadLib() {
     if (query_dl_error()) return false;
     naratte_load_rom        = reinterpret_cast<int8_t (*)(void*, const char*, const char*)>(dlsym(_lib_handle, _symbols["LoadRom"].c_str()));
     if (query_dl_error()) return false;
-    naratte_tick            = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, _symbols["Tick"].c_str()));
+    naratte_tick            = reinterpret_cast<void   (*)(void*, void*, void*)>(dlsym(_lib_handle, _symbols["Tick"].c_str()));
     if (query_dl_error()) return false;
     naratte_input           = reinterpret_cast<void   (*)(void*, uint8_t)>(dlsym(_lib_handle, _symbols["Input"].c_str()));
     if (query_dl_error()) return false;
@@ -139,7 +139,7 @@ void Naratte::update() {
         }
 
         naratte_input(_cpu, Config::get()->Joypad);
-        naratte_tick(_cpu, _ppu);
+        naratte_tick(_cpu, _mem, _ppu);
 
         if (Config::get()->isMonitored()) {
             for (const mem_change* change = naratte_get_mc(_mem); change != nullptr; change = change->next) {

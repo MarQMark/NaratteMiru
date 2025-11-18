@@ -180,7 +180,7 @@ private:
     int8_t (*naratte_init_d)(void** cpu, void** mem, void** ppu, void** dasm){};
     int8_t (*naratte_load_rom)(void* mem, const char* boot, const char* game){};
 
-    void (*naratte_tick)(void* cpu, void* ppu){};
+    void (*naratte_tick)(void* cpu, void* mem, void* ppu){};
     void (*naratte_input)(void* cpu, uint8_t);
 
     void (*naratte_get_ic)(void *cpu, uint8_t* ic){};
@@ -200,7 +200,7 @@ private:
     uint8_t (*mem_read)(void* mem, uint16_t addr){};
     void (*mem_write)(void* mem, uint16_t addr, uint8_t data){};
 
-    void (*ppu_draw)(void* ppu, void* cpu){};
+    void (*ppu_draw)(void* ppu, void* mem){};
 
     std::vector<Instruction> _instructions;
     std::vector<MemWrites> _mem_writes;
