@@ -22,6 +22,8 @@ public:
 private:
     Naratte* _naratte{};
     GLuint _fb_tex = 0;
+
+    int _buffer = 0; // 0: All, 1: BG, 2: Win, 3: Obj, 4: Prio
 };
 
 

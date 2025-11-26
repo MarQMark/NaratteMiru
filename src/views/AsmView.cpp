@@ -458,6 +458,51 @@ void AsmView::add_context_menu(const int id) {
     }
 }
 
+bool parseCpuFilter(const std::string& f, std::string& reg, uint32_t& value) {
+    if (f.size() < 4 || f[0] != '@')
+        return false;
+
+    auto eqPos = f.find('=');
+    if (eqPos == std::string::npos)
+        return false;
+
+    reg = f.substr(1, eqPos - 1);
+    try {
+        value = std::stoul(f.substr(eqPos + 1), nullptr, 16);
+    } catch (...) {
+        return false;
+    }
+    return true;
+}
+
+bool cpuValueMatches(const Instruction::sm83& cpu, const std::string& reg, uint32_t value) {
+    if (reg == "A")  return cpu.A  == value;
+    if (reg == "F")  return cpu.F  == value;
+    if (reg == "B")  return cpu.B  == value;
+    if (reg == "C")  return cpu.C  == value;
+    if (reg == "D")  return cpu.D  == value;
+    if (reg == "E")  return cpu.E  == value;
+    if (reg == "H")  return cpu.H  == value;
+    if (reg == "L")  return cpu.L  == value;
+
+    if (reg == "AF") return cpu.AF == value;
+    if (reg == "BC") return cpu.BC == value;
+    if (reg == "DE") return cpu.DE == value;
+    if (reg == "HL") return cpu.HL == value;
+
+    if (reg == "PC") return cpu.PC == value;
+    if (reg == "SP") return cpu.SP == value;
+
+    // Flags
+    if (reg == "Z") return ((cpu.F & FLAG_Z) != 0) == value;
+    if (reg == "N") return ((cpu.F & FLAG_N) != 0) == value;
+    if (reg == "Hf")return ((cpu.F & FLAG_H) != 0) == value;
+    if (reg == "C") return ((cpu.F & FLAG_C) != 0) == value;
+
+    return false;
+}
+
+
 void AsmView::jump_filter(bool next) {
     auto& instructions = _naratte->getInstructions();
     int selection = -1;
@@ -478,11 +523,23 @@ void AsmView::jump_filter(bool next) {
             selection = std::stoi(_jump_filter);
         }
         catch (...) {
+            std::string reg;
+            uint32_t cpuVal;
+            bool isCpuFilter = parseCpuFilter(_jump_filter, reg, cpuVal);
+
             for (int i = start; (i < instructions.size()) && (i >= 0); next ? i++ : i--) {
-                std::string name = _naratte->getInstructionName(instructions[i].op);
-                if (name.find(_jump_filter) != std::string::npos) {
-                    selection = i;
-                    break;
+                if (!isCpuFilter) {
+                    std::string name = _naratte->getInstructionName(instructions[i].op);
+                    if (name.find(_jump_filter) != std::string::npos) {
+                        selection = i;
+                        break;
+                    }
+                } else {
+                    const Instruction::sm83& snapshotCpu = instructions[i].cpu;
+                    if (cpuValueMatches(snapshotCpu, reg, cpuVal)) {
+                        selection = i;
+                        break;
+                    }
                 }
             }
         }

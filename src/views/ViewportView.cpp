@@ -3,6 +3,11 @@
 #include "Config.h"
 #include "imgui.h"
 
+//#define VIEWPORT_WIDTH 256
+//#define VIEWPORT_HEIGHT 256
+#define VIEWPORT_WIDTH 160
+#define VIEWPORT_HEIGHT 144
+
 ViewportView::ViewportView(Naratte* naratte) : _naratte(naratte) {
     glGenTextures(1, &_fb_tex);
     glBindTexture(GL_TEXTURE_2D, _fb_tex);
@@ -11,7 +16,7 @@ ViewportView::ViewportView(Naratte* naratte) : _naratte(naratte) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     // allocate empty 256×256 RGBA buffer
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0,
                  GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -28,8 +33,31 @@ void ViewportView::render() {
 
     ImGui::Begin("Viewport");
 
-    const float tex_width  = 256.0f;
-    const float tex_height = 256.0f;
+    const int buffer = _buffer;
+    if (buffer == 0) ImGui::BeginDisabled();
+    if (ImGui::Button("All"))  _buffer = 0;
+    if (buffer == 0) ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (buffer == 1) ImGui::BeginDisabled();
+    if (ImGui::Button("BG"))  _buffer = 1;
+    if (buffer == 1) ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (buffer == 2) ImGui::BeginDisabled();
+    if (ImGui::Button("Win"))  _buffer = 2;
+    if (buffer == 2) ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (buffer == 3) ImGui::BeginDisabled();
+    if (ImGui::Button("Obj"))  _buffer = 3;
+    if (buffer == 3) ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (buffer == 4) ImGui::BeginDisabled();
+    if (ImGui::Button("Prio"))  _buffer = 4;
+    if (buffer == 4) ImGui::EndDisabled();
+
+    ImGui::Separator();
+
+    const float tex_width  = VIEWPORT_WIDTH;
+    const float tex_height = VIEWPORT_HEIGHT;
     const float tex_aspect = tex_width / tex_height;
 
     // available size inside the window
@@ -43,8 +71,10 @@ void ViewportView::render() {
         draw_width  = avail.y * tex_aspect;
     }
 
-    if (Config::get()->isViewportFixed())
-        draw_height = draw_width = 255*1;
+    if (Config::get()->isViewportFixed()) {
+        draw_width = VIEWPORT_WIDTH;
+        draw_height = VIEWPORT_HEIGHT;
+    }
 
     // compute centered position
     ImVec2 cursor = ImGui::GetCursorScreenPos();
@@ -64,7 +94,7 @@ void ViewportView::render() {
 
 void ViewportView::updateFB(const uint32_t *fb) const {
     glBindTexture(GL_TEXTURE_2D, _fb_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0,
-                 GL_BGRA, GL_UNSIGNED_BYTE, fb);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0,
+                 GL_BGRA, GL_UNSIGNED_BYTE, fb + 160 * 144 * _buffer);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
