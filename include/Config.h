@@ -41,8 +41,8 @@ public:
     bool isMonitored() const;
     void setMonitored(bool enable);
 
-    bool isViewportFixed() const;
-    void setViewportFixed(bool fixed);
+    bool isEndlessLoop() const;
+    void setEndlessLoop(bool enable);
 
     bool Pause = false;
     bool Reload = false;
@@ -64,7 +64,7 @@ private:
     bool _dirty_cs = false;
 
     bool _monitor = true;
-    bool _viewport_fixed = true;
+    bool _endless_loop = true;
 
     static std::time_t last_modified(const std::string& path);
 };

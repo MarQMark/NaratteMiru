@@ -62,7 +62,7 @@ void Config::load() {
     std::getline(ifs, var);
     if(!var.empty()) {
         try {
-            _viewport_fixed = std::stoi(var);
+            _endless_loop = std::stoi(var);
         } catch (...) {}
     }
 }
@@ -80,7 +80,7 @@ void Config::save() const {
     ofs << _jac_start << "\n";
     ofs << _jac_end << "\n";
     ofs << _monitor << "\n";
-    ofs << _viewport_fixed << "\n";
+    ofs << _endless_loop << "\n";
 }
 
 void Config::setAutoReload(const bool enable) {
@@ -175,12 +175,12 @@ void Config::setMonitored(const bool enable) {
     }
 }
 
-bool Config::isViewportFixed() const {
-    return _viewport_fixed;
+bool Config::isEndlessLoop() const {
+    return _endless_loop;
 }
 
-void Config::setViewportFixed(const bool fixed) {
-    _viewport_fixed = fixed;
+void Config::setEndlessLoop(const bool enable) {
+    _endless_loop = enable;
 }
 
 bool Config::dirtyCallStack() {

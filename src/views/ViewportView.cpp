@@ -71,11 +71,6 @@ void ViewportView::render() {
         draw_width  = avail.y * tex_aspect;
     }
 
-    if (Config::get()->isViewportFixed()) {
-        draw_width = VIEWPORT_WIDTH;
-        draw_height = VIEWPORT_HEIGHT;
-    }
-
     // compute centered position
     ImVec2 cursor = ImGui::GetCursorScreenPos();
     ImVec2 center_offset = ImVec2(

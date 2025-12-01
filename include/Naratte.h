@@ -200,8 +200,6 @@ private:
     uint8_t (*mem_read)(void* mem, uint16_t addr){};
     void (*mem_write)(void* mem, uint16_t addr, uint8_t data){};
 
-    void (*ppu_draw)(void* ppu, void* mem){};
-
     std::vector<Instruction> _instructions;
     std::vector<MemWrites> _mem_writes;
 

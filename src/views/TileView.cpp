@@ -166,8 +166,8 @@ void TileView::render_obj() {
     {
         for (int i = 0; i < 40; i++)
         {
-            const uint16_t pos_y    = _naratte->readPseudoMem(baseAddr + i * 4 + 0) - 16;
-            const uint16_t pos_x    = _naratte->readPseudoMem(baseAddr + i * 4 + 1) - 8;
+            const uint8_t pos_y    = _naratte->readPseudoMem(baseAddr + i * 4 + 0) - 16;
+            const uint8_t pos_x    = _naratte->readPseudoMem(baseAddr + i * 4 + 1) - 8;
             const uint8_t  obj_t_id = _naratte->readPseudoMem(baseAddr + i * 4 + 2);
             const uint8_t  attr     = _naratte->readPseudoMem(baseAddr + i * 4 + 3);
 

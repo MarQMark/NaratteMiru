@@ -59,7 +59,6 @@ bool Naratte::reloadLib() {
     naratte_free_pseudo_mem = nullptr;
     mem_read = nullptr;
     mem_write = nullptr;
-    ppu_draw = nullptr;
 
     if (_lib_handle)
         dlclose(_lib_handle);
@@ -99,9 +98,6 @@ bool Naratte::reloadLib() {
     mem_read                = reinterpret_cast<uint8_t(*)(void*, uint16_t)>(dlsym(_lib_handle, _symbols["MemoryRead"].c_str()));
     if (query_dl_error()) return false;
     mem_write               = reinterpret_cast<void   (*)(void*, uint16_t, uint8_t)>(dlsym(_lib_handle, _symbols["MemoryWrite"].c_str()));
-    if (query_dl_error()) return false;
-
-    ppu_draw                = reinterpret_cast<void   (*)(void*, void*)>(dlsym(_lib_handle, _symbols["PPUDraw"].c_str()));
     if (query_dl_error()) return false;
 
     if(!naratte_init_d(&_cpu, &_mem, &_ppu, &_dasm)) {
@@ -230,7 +226,9 @@ void Naratte::setSelected(const int selected) {
 
     if (selected != _selected) {
         reloadPseudoMem(selected);
-        ppu_draw(_ppu, _pseudo_mem);
+        // TODO: fix
+        //if (ppu_draw)
+        //    ppu_draw(_ppu, _pseudo_mem);
         _dirty = true;
     }
 
@@ -337,6 +335,9 @@ void Naratte::deserialize(const std::string &path) {
 }
 
 bool Naratte::is_inf_loop() const {
+    if (!Config::get()->isEndlessLoop())
+        return false;
+
     // JR -2
     if (!_instructions.empty() &&
         _instructions.back().op[0] == 0x18 &&
@@ -414,7 +415,6 @@ void Naratte::load_symbols() {
     _symbols["FreePseudoRam"] = "naratte_free_pseudo_mem";
     _symbols["MemoryRead"] = "mem_read";
     _symbols["MemoryWrite"] = "mem_write";
-    _symbols["PPUDraw"] = "ppu_draw";
 
     const std::string path = "symbols.conf";
     if (!std::filesystem::exists(path))

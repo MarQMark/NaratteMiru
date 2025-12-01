@@ -80,7 +80,7 @@ void SettingsView::setVisible(const bool visible) {
         _lib_path = Config::get()->getLibPath();
         _boot_path = Config::get()->getBootPath();
         _game_path = Config::get()->getGamePath();
-        _viewport_fixed = Config::get()->isViewportFixed();
+        _endless_loop = Config::get()->isEndlessLoop();
         _jp_as_call = Config::get()->getJPasCALL();
         _jac_start = Config::get()->getJaCStart();
         _jac_end = Config::get()->getJaCEnd();
@@ -143,11 +143,11 @@ void SettingsView::menu_general() {
     ImGui::Separator();
     ImGui::Dummy(ImVec2(0, 15));
 
-    const bool viewportFixedShdw = _viewport_fixed;
-    ImGui::Checkbox("##viewportFixed", &_viewport_fixed);
+    const bool endlessLoopShdw = _endless_loop;
+    ImGui::Checkbox("##endlessLoop", &_endless_loop);
     ImGui::SameLine();
-    ImGui::Text("Fix Viewport Size to 256x256");
-    if (viewportFixedShdw != _viewport_fixed) _dirty = true;
+    ImGui::Text("Stop when endless loop detected");
+    if (endlessLoopShdw != _endless_loop) _dirty = true;
 }
 
 void SettingsView::menu_format() {
@@ -193,7 +193,7 @@ void SettingsView::apply() {
     config->setLibPath(_lib_path);
     config->setBootPath(_boot_path);
     config->setGamePath(_game_path);
-    config->setViewportFixed(_viewport_fixed);
+    config->setEndlessLoop(_endless_loop);
 
     config->setJPasCALL(_jp_as_call);
     config->setJaCStart(_jac_start);
