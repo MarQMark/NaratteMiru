@@ -689,7 +689,7 @@ void dasm_exec_cb(struct dasm* disasm) {
 }
 
 int8_t dasm_init(struct dasm** disasm) {
-    *disasm = malloc(sizeof(struct dasm));
+    *disasm = static_cast<struct dasm *>(malloc(sizeof(struct dasm)));
     if (*disasm == NULL)
         return -1;
 
@@ -882,7 +882,7 @@ void dasm_free(struct dasm **disasm) {
 }
 
 void dasm_disassemble(struct dasm *disasm, uint8_t *ins) {
-    disasm->instructions = malloc(3);
+    disasm->instructions = static_cast<uint8_t *>(malloc(3));
     memcpy(disasm->instructions, ins, 3);
     disasm->PC = 0;
 

@@ -46,10 +46,11 @@ add_executable(NaratteMiru
         src/views/TileView.cpp
         src/views/ROMView.cpp
 
-        disassembler/disassembler.c
+        disassembler/disassembler.cpp
 )
 target_include_directories(NaratteMiru PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/disassembler
 )
 target_link_libraries(NaratteMiru PUBLIC imgui glfw)
 

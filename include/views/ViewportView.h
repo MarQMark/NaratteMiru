@@ -17,6 +17,8 @@ public:
 
     void render() override;
 
+    int getSelectedBuffer() const;
+
     void updateFB(const uint32_t* fb) const;
 
 private:

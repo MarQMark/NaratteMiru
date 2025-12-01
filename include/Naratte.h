@@ -125,7 +125,7 @@ public:
 
     void rebuildCallStack();
 
-    uint32_t* getFB() const;
+    uint32_t* getFB(int buffer) const;
     std::vector<Instruction>& getInstructions();
     char* getInstructionName(uint8_t* ic) const;
 
@@ -169,7 +169,7 @@ private:
     void load_symbols();
     void* _lib_handle{};
 
-    bool query_dl_error() const;
+    static void query_dl_error();
 
     bool _builtin_dasm = false;
 
@@ -201,6 +201,9 @@ private:
     void (*naratte_free_pseudo_mem)(void** mem){};
     uint8_t (*mem_read)(void* mem, uint16_t addr){};
     void (*mem_write)(void* mem, uint16_t addr, uint8_t data){};
+
+    uint32_t* (*naratte_get_fb)(void* ppu){};
+    void (*naratte_get_fbs)(void* ppu, uint32_t** bg, uint32_t** win, uint32_t** obj, uint32_t** prio){};
 
     std::vector<Instruction> _instructions;
     std::vector<MemWrites> _mem_writes;

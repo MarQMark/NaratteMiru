@@ -4,7 +4,6 @@
 /* Todo:
  *  - Add Time
  *  - Add Snapshot
- *  - Add Bg/Win/Obj/Prio Views
  *  - Add README
  */
 
@@ -61,8 +60,9 @@ void Miru::update() {
 
     if(Config::get()->Ticks > 0 && !Config::get()->Pause) {
         _naratte->update();
-        _viewport_view->updateFB(_naratte->getFB());
     }
+
+    _viewport_view->updateFB(_naratte->getFB(_viewport_view->getSelectedBuffer()));
 
     _view->render();
 }

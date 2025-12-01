@@ -27,7 +27,7 @@ ViewportView::~ViewportView() {
 
 void ViewportView::render() {
     if (_naratte->isDirty()) {
-        updateFB(_naratte->getFB());
+        updateFB(_naratte->getFB(getSelectedBuffer()));
         _naratte->resetDirty();
     }
 
@@ -87,9 +87,16 @@ void ViewportView::render() {
     ImGui::End();
 }
 
+int ViewportView::getSelectedBuffer() const {
+    return _buffer;
+}
+
 void ViewportView::updateFB(const uint32_t *fb) const {
+    if (!fb)
+        return;
+
     glBindTexture(GL_TEXTURE_2D, _fb_tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0,
-                 GL_BGRA, GL_UNSIGNED_BYTE, fb + 160 * 144 * _buffer);
+                 GL_BGRA, GL_UNSIGNED_BYTE, fb);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
