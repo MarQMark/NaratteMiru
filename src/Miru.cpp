@@ -1,5 +1,13 @@
 #include "Miru.h"
 
+
+/* Todo:
+ *  - Add Time
+ *  - Add Snapshot
+ *  - Add Bg/Win/Obj/Prio Views
+ *  - Add README
+ */
+
 #include <Config.h>
 #include <dlfcn.h>
 

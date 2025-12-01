@@ -9,12 +9,17 @@
 #include "Config.h"
 #include "Util.h"
 
+#include "../disassembler/disassembler.h"
+
 Naratte::Naratte() {
     load_symbols();
     reload();
 }
 
 Naratte::~Naratte() {
+    if (_builtin_dasm && _dasm)
+        dasm_free(reinterpret_cast<dasm **>(&_dasm));
+
     if (naratte_free_d)
         naratte_free_d(&_cpu, &_mem, &_ppu, &_dasm);
 }
@@ -38,6 +43,9 @@ bool Naratte::reloadLib() {
     _instructions.clear();
     _mem_writes.clear();
     _call_stack.clear();
+
+    if (_builtin_dasm && _dasm)
+        dasm_free(reinterpret_cast<dasm **>(&_dasm));
 
     if (naratte_free_d)
         naratte_free_d(&_cpu, &_mem, &_ppu, &_dasm);
@@ -112,6 +120,11 @@ bool Naratte::reloadLib() {
         }
     }
 
+    if (!_dasm) {
+        _builtin_dasm = true;
+        dasm_init(reinterpret_cast<dasm **>(&_dasm));
+    }
+
     reloadPseudoMem(0);
 
     return true;
@@ -161,6 +174,11 @@ std::vector<Instruction>& Naratte::getInstructions() {
 char* Naratte::getInstructionName(uint8_t *ic) const {
     if(!_success)
         return nullptr;
+
+    if (_builtin_dasm && _dasm) {
+        dasm_disassemble(static_cast<dasm*>(_dasm), ic);
+        return static_cast<dasm*>(_dasm)->buf;
+    }
 
     if (!naratte_disassemble)
         return nullptr;

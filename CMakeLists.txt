@@ -45,6 +45,8 @@ add_executable(NaratteMiru
         src/views/CartridgeInfoView.cpp
         src/views/TileView.cpp
         src/views/ROMView.cpp
+
+        disassembler/disassembler.c
 )
 target_include_directories(NaratteMiru PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include

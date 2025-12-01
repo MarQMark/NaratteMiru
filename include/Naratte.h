@@ -171,6 +171,8 @@ private:
 
     bool query_dl_error() const;
 
+    bool _builtin_dasm = false;
+
     void* _cpu{};
     void* _mem{};
     void* _ppu{};
