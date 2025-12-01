@@ -91,8 +91,10 @@ void AsmView::render() {
     ImGui::SameLine(); ImGui::Text("(%lu)", _naratte->getInstructions().size());
     if(_selected != -1) {
         ImGui::SameLine();
-        char* name = _naratte->getInstructionName(_naratte->getInstructions()[_selected].op);
-        ImGui::Text(name);
+        if (char* name = _naratte->getInstructionName(_naratte->getInstructions()[_selected].op))
+            ImGui::Text(name);
+        else
+            ImGui::Text("No disassembler");
     }
     ImGui::End();
 
@@ -174,7 +176,9 @@ void AsmView::render() {
 
 void AsmView::get_label(char *label, const size_t len, const int id) const {
     auto& instruction = _naratte->getInstructions()[id];
-    char* name = _naratte->getInstructionName(instruction.op);
+    const char* name = _naratte->getInstructionName(instruction.op);
+    if (!name)
+        name = "No disassembler";
 
     char op1[4], op2[4];
     snprintf(op1, sizeof(op1), "%02X", instruction.op[0]);
@@ -530,6 +534,8 @@ void AsmView::jump_filter(bool next) {
             for (int i = start; (i < instructions.size()) && (i >= 0); next ? i++ : i--) {
                 if (!isCpuFilter) {
                     std::string name = _naratte->getInstructionName(instructions[i].op);
+                    if (!name.data())
+                        name = "No disassembler";
                     if (name.find(_jump_filter) != std::string::npos) {
                         selection = i;
                         break;

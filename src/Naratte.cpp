@@ -105,9 +105,11 @@ bool Naratte::reloadLib() {
         return false;
     }
 
-    if(!naratte_load_rom(_mem, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
-        fprintf(stderr, "Error loading ROMs\n");
-        return false;
+    if (naratte_load_rom) {
+        if(!naratte_load_rom(_mem, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
+            fprintf(stderr, "Error loading ROMs\n");
+            return false;
+        }
     }
 
     reloadPseudoMem(0);
@@ -128,16 +130,19 @@ void Naratte::update() {
         }
 
         if (Config::get()->isMonitored()) {
-            _instructions.emplace_back(Instruction{{0xDD, 0xDD, 0xDD, 0x0}});
-            naratte_get_ic(_cpu, _instructions.back().op);
-            memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
+            if (naratte_get_ic) {
+                _instructions.emplace_back(Instruction{{0xDD, 0xDD, 0xDD, 0x0}});
+                naratte_get_ic(_cpu, _instructions.back().op);
+                memcpy(&_instructions.back().cpu, _cpu, sizeof(_instructions.back().cpu));
+            }
             add_last_call();
         }
 
-        naratte_input(_cpu, Config::get()->Joypad);
+        if (naratte_input)
+            naratte_input(_cpu, Config::get()->Joypad);
         naratte_tick(_cpu, _mem, _ppu);
 
-        if (Config::get()->isMonitored()) {
+        if (Config::get()->isMonitored() && naratte_get_mc) {
             for (const mem_change* change = naratte_get_mc(_mem); change != nullptr; change = change->next) {
                 _mem_writes.emplace_back(MemWrites{_instructions.size() - 1, change->addr, change->data});
             }
@@ -157,6 +162,9 @@ char* Naratte::getInstructionName(uint8_t *ic) const {
     if(!_success)
         return nullptr;
 
+    if (!naratte_disassemble)
+        return nullptr;
+
     return naratte_disassemble(_dasm, ic);
 }
 
@@ -171,6 +179,9 @@ void Naratte::reloadPseudoMem(const size_t iId) {
     if (_pseudo_mem)
         naratte_free_pseudo_mem(&_pseudo_mem);
 
+    if (!naratte_init_pseudo_mem)
+        return;
+
     if (!naratte_init_pseudo_mem(&_pseudo_mem, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
         fprintf(stderr, "Error init pseudo ram\n");
         return;
@@ -180,7 +191,8 @@ void Naratte::reloadPseudoMem(const size_t iId) {
         if (idx > iId)
             break;
 
-        mem_write(_pseudo_mem, addr, data);
+        if (mem_write && _pseudo_mem)
+            mem_write(_pseudo_mem, addr, data);
     }
 
     //((uint8_t*)_pseudo_mem)[98392] = 0;
@@ -190,8 +202,14 @@ uint8_t Naratte::readPseudoMem(const uint16_t addr) const {
     if(!_success)
         return 0x00;
 
+    if (!mem_read)
+        return 0xFF;
+
     if (_selected < 0)
         return mem_read(_mem, addr);
+
+    if (!_pseudo_mem)
+        return 0xFF;
 
     return mem_read(_pseudo_mem, addr);
 }
@@ -200,8 +218,14 @@ void Naratte::writePseudoMem(const uint16_t addr, const uint8_t data) const {
     if(!_success)
         return;
 
+    if (!mem_write)
+        return;
+
     if (_selected < 0)
         return mem_write(_mem, addr, data);
+
+    if (!_pseudo_mem)
+        return;
 
     return mem_write(_pseudo_mem, addr, data);
 }
@@ -214,8 +238,14 @@ void Naratte::enableMemChange(const bool enable) const {
     if(!_success)
         return;
 
+    if (!naratte_mc_enable)
+        return;
+
     if (_selected < 0)
         return naratte_mc_enable(_mem, enable ? 1 : 0);
+
+    if (!_pseudo_mem)
+        return;
 
     return naratte_mc_enable(_pseudo_mem, enable ? 1 : 0);
 }
