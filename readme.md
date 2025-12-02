@@ -139,3 +139,5 @@ Restores emulator state from a snapshot created by GetSnapshot.
 - While the content should be mostly accurate treat is with some caution, there might be some logic errors, especially with extreme edge cases
 
 # Screenshots
+<img width="2022" height="1224" alt="image" src="https://github.com/user-attachments/assets/c5e59c6c-ab76-4759-8822-e2b564d2de24" />
+<img width="1412" height="879" alt="image" src="https://github.com/user-attachments/assets/69a56c9e-bc6f-4cf8-85c3-295e2ac87ca6" />
