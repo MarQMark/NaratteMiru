@@ -1,10 +1,5 @@
 #include "Miru.h"
 
-
-/* Todo:
- *  - Add README
- */
-
 #include <Config.h>
 #include <dlfcn.h>
 #include <imgui.h>
