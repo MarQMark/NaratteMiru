@@ -44,6 +44,11 @@ public:
     bool isEndlessLoop() const;
     void setEndlessLoop(bool enable);
 
+    float getMinFR() const;
+    void setMinFR(float min);
+    double getSpeedMulti() const;
+    void setSpeedMulti(double multi);
+
     bool Pause = false;
     bool Reload = false;
 
@@ -64,7 +69,9 @@ private:
     bool _dirty_cs = false;
 
     bool _monitor = true;
-    bool _endless_loop = true;
+    double _endless_loop = true;
+    float _min_fr = 60;
+    double _speed_multi = 1;
 
     static std::time_t last_modified(const std::string& path);
 };

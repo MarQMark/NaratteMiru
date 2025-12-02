@@ -1,6 +1,7 @@
 #ifndef NARATTEMIRU_NARATTE_H
 #define NARATTEMIRU_NARATTE_H
 
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <string>
@@ -123,6 +124,9 @@ public:
     bool reloadLib();
     void update();
 
+    void loadSnapshot();
+    void saveSnapshot() const;
+
     void rebuildCallStack();
 
     uint32_t* getFB(int buffer) const;
@@ -159,6 +163,8 @@ private:
 
     int _selected = -1;
     bool _dirty = false;
+
+    std::chrono::steady_clock::time_point _last_time;
 
     bool is_inf_loop() const;
 
@@ -204,6 +210,9 @@ private:
 
     uint32_t* (*naratte_get_fb)(void* ppu){};
     void (*naratte_get_fbs)(void* ppu, uint32_t** bg, uint32_t** win, uint32_t** obj, uint32_t** prio){};
+
+    void (*naratte_get_snapshot)(const void* cpu, const void* mem, const void* ppu, uint8_t** buffer, uint32_t* size);
+    void (*naratte_set_snapshot)(void* cpu, void* mem, void* ppu, const uint8_t* buffer, uint32_t size);
 
     std::vector<Instruction> _instructions;
     std::vector<MemWrites> _mem_writes;

@@ -40,6 +40,8 @@ void Naratte::reloadROM() {
 }
 
 bool Naratte::reloadLib() {
+    _last_time = std::chrono::steady_clock::now();
+
     _instructions.clear();
     _mem_writes.clear();
     _call_stack.clear();
@@ -115,6 +117,11 @@ bool Naratte::reloadLib() {
     naratte_get_fbs         = reinterpret_cast<void      (*)(void*, uint32_t**, uint32_t**, uint32_t**, uint32_t**)>(dlsym(_lib_handle, _symbols["GetFrameBuffers"].c_str()));
     query_dl_error();
 
+    naratte_get_snapshot    = reinterpret_cast<void (*)(const void*,const  void*,const void*, uint8_t**, uint32_t*)>(dlsym(_lib_handle, _symbols["GetSnapshot"].c_str()));
+    query_dl_error();
+    naratte_set_snapshot    = reinterpret_cast<void (*)(void*, void*, void*, const uint8_t*, uint32_t)>(dlsym(_lib_handle, _symbols["SetSnapshot"].c_str()));
+    query_dl_error();
+
     if(!naratte_init_d(&_cpu, &_mem, &_ppu, &_dasm)) {
         fprintf(stderr, "Error init naratte debug\n");
         return false;
@@ -143,7 +150,19 @@ void Naratte::update() {
 
     _dirty = false;
 
-    for(int i = 0; i < 10000; i++) {
+    // Calculate machine expected cycles
+    auto now = std::chrono::steady_clock::now();
+    double dt = std::chrono::duration<double>(now - _last_time).count();
+    dt = std::min(dt, 1. / Config::get()->getMinFR());
+    _last_time = now;
+
+    double speed = Config::get()->getSpeedMulti();
+    if(mem_read && _mem && (mem_read(_mem, 0xFF4C) & 0x80))
+        speed *= 2;
+
+    const auto steps = static_cast<uint32_t>(dt * 4194304 * speed);
+
+    for(int i = 0; i < steps; i++) {
         if (is_inf_loop()) {
             Config::get()->Ticks = 0;
             break;
@@ -168,6 +187,61 @@ void Naratte::update() {
             }
         }
     }
+}
+
+void Naratte::loadSnapshot() {
+    if(!naratte_set_snapshot)
+        return;
+
+    std::ifstream is("./snapshot.nm", std::ios::binary);
+    if (!is) {
+        printf("Cannot open file: ./snapshot.nm\n");
+        return;
+    }
+
+    uint32_t size = 0;
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    void* buffer = malloc(size);
+    is.read(static_cast<char*>((buffer)), size);
+
+    if (!is) {
+        fprintf(stderr, "Error while reading: ./snapshot.nm\n");
+        free(buffer);
+        return;
+    }
+
+    printf("Load Size: %d\n", size);
+
+    naratte_set_snapshot(_cpu, _mem, _ppu, static_cast<uint8_t*>(buffer), size);
+
+    free(buffer);
+}
+
+void Naratte::saveSnapshot() const {
+    if(!naratte_get_snapshot)
+        return;
+
+    uint32_t size;
+    uint8_t* buffer{};
+    naratte_get_snapshot(_cpu, _mem, _ppu, &buffer, &size);
+
+    std::ofstream os("./snapshot.nm", std::ios::binary);
+    if (!os) {
+        fprintf(stderr, "Cannot open file: ./snapshot.nm\n");
+        return;
+    }
+
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(reinterpret_cast<const char*>(buffer), size);
+
+    if (!os) {
+        fprintf(stderr, "Error while writing: ./snapshot.nm\n");
+    }
+
+    if(buffer)
+        free(buffer);
+
+    printf("Save Size: %d\n", size);
 }
 
 uint32_t* Naratte::getFB(const int buffer) const {
@@ -496,6 +570,8 @@ void Naratte::load_symbols() {
     _symbols["MemoryWrite"] = "mem_write";
     _symbols["GetFrameBuffer"] = "naratte_get_fb";
     _symbols["GetFrameBuffers"] = "naratte_get_fbs";
+    _symbols["GetSnapshot"] = "naratte_get_snapshot";
+    _symbols["SetSnapshot"] = "naratte_set_snapshot";
 
     const std::string path = "symbols.conf";
     if (!std::filesystem::exists(path))

@@ -11,6 +11,7 @@ SettingsView::SettingsView() {
 
 static const char* sSubmenuNames[] = {
     "General",
+    "Emulation",
     "Formatting",
 };
 static constexpr int sSubmenuCount = sizeof(sSubmenuNames) / sizeof(sSubmenuNames[0]);
@@ -39,7 +40,8 @@ void SettingsView::render() {
             switch (_menu)
             {
                 case 0: menu_general(); break;
-                case 1: menu_format(); break;
+                case 1: menu_emulation(); break;
+                case 2: menu_format(); break;
                 default: break;
             }
         }
@@ -81,6 +83,8 @@ void SettingsView::setVisible(const bool visible) {
         _boot_path = Config::get()->getBootPath();
         _game_path = Config::get()->getGamePath();
         _endless_loop = Config::get()->isEndlessLoop();
+        _min_fr = Config::get()->getMinFR();
+        _speed_multi = Config::get()->getSpeedMulti();
         _jp_as_call = Config::get()->getJPasCALL();
         _jac_start = Config::get()->getJaCStart();
         _jac_end = Config::get()->getJaCEnd();
@@ -141,13 +145,33 @@ void SettingsView::menu_general() {
 
     ImGui::Dummy(ImVec2(0, 5));
     ImGui::Separator();
-    ImGui::Dummy(ImVec2(0, 15));
+}
 
+void SettingsView::menu_emulation() {
     const bool endlessLoopShdw = _endless_loop;
     ImGui::Checkbox("##endlessLoop", &_endless_loop);
     ImGui::SameLine();
     ImGui::Text("Stop when endless loop detected");
     if (endlessLoopShdw != _endless_loop) _dirty = true;
+
+    const double speedMultiShdw = _speed_multi;
+    std::string speedMulti = std::to_string(_speed_multi);
+    ImGui::InputText("Minimum Framerate (Hz)", &speedMulti, ImGuiInputTextFlags_CharsScientific);
+    try {
+        _speed_multi = std::stod(speedMulti);
+    } catch (...) {}
+    if (speedMultiShdw != _speed_multi) _dirty = true;
+
+    const float minFRShdw = _min_fr;
+    std::string minFR = std::to_string(_min_fr);
+    ImGui::InputText("Speed Multiplier", &minFR, ImGuiInputTextFlags_CharsScientific);
+    try {
+        _min_fr = std::stof(minFR);
+    } catch (...) {}
+    if (minFRShdw != _min_fr) _dirty = true;
+
+    ImGui::Dummy(ImVec2(0, 5));
+    ImGui::Separator();
 }
 
 void SettingsView::menu_format() {
@@ -183,6 +207,9 @@ void SettingsView::menu_format() {
 
     if (!_jp_as_call)
         ImGui::EndDisabled();
+
+    ImGui::Dummy(ImVec2(0, 5));
+    ImGui::Separator();
 }
 
 void SettingsView::apply() {
@@ -193,7 +220,10 @@ void SettingsView::apply() {
     config->setLibPath(_lib_path);
     config->setBootPath(_boot_path);
     config->setGamePath(_game_path);
+
     config->setEndlessLoop(_endless_loop);
+    config->setMinFR(_min_fr);
+    config->setSpeedMulti(_speed_multi);
 
     config->setJPasCALL(_jp_as_call);
     config->setJaCStart(_jac_start);

@@ -65,6 +65,18 @@ void Config::load() {
             _endless_loop = std::stoi(var);
         } catch (...) {}
     }
+    std::getline(ifs, var);
+    if(!var.empty()) {
+        try {
+            _min_fr = std::stof(var);
+        } catch (...) {}
+    }
+    std::getline(ifs, var);
+    if(!var.empty()) {
+        try {
+            _speed_multi = std::stod(var);
+        } catch (...) {}
+    }
 }
 
 void Config::save() const {
@@ -81,6 +93,8 @@ void Config::save() const {
     ofs << _jac_end << "\n";
     ofs << _monitor << "\n";
     ofs << _endless_loop << "\n";
+    ofs << _min_fr << "\n";
+    ofs << _speed_multi << "\n";
 }
 
 void Config::setAutoReload(const bool enable) {
@@ -181,6 +195,22 @@ bool Config::isEndlessLoop() const {
 
 void Config::setEndlessLoop(const bool enable) {
     _endless_loop = enable;
+}
+
+float Config::getMinFR() const {
+    return _min_fr;
+}
+
+void Config::setMinFR(float min) {
+    _min_fr = min;
+}
+
+double Config::getSpeedMulti() const {
+    return _speed_multi;
+}
+
+void Config::setSpeedMulti(double multi) {
+    _speed_multi = multi;
 }
 
 bool Config::dirtyCallStack() {

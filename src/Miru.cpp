@@ -2,13 +2,12 @@
 
 
 /* Todo:
- *  - Add Time
- *  - Add Snapshot
  *  - Add README
  */
 
 #include <Config.h>
 #include <dlfcn.h>
+#include <imgui.h>
 
 Miru::Miru() {
     _naratte = new Naratte;
@@ -63,6 +62,16 @@ void Miru::update() {
     }
 
     _viewport_view->updateFB(_naratte->getFB(_viewport_view->getSelectedBuffer()));
+
+    if (ImGui::GetIO().KeyCtrl) {
+        if(ImGui::IsKeyPressed(ImGuiKey_R))
+            _naratte->reload();
+
+        if(ImGui::IsKeyPressed(ImGuiKey_E))
+            _naratte->saveSnapshot();
+        if(ImGui::IsKeyPressed(ImGuiKey_R))
+            _naratte->loadSnapshot();
+    }
 
     _view->render();
 }

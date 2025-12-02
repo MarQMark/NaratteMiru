@@ -62,6 +62,17 @@ void Menubar::render() {
             ImGui::Checkbox("Monitor", &monitor);
             Config::get()->setMonitored(monitor);
 
+            ImGui::Dummy(ImVec2(1, 0));
+            ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+            ImGui::Dummy(ImVec2(5, 0));
+
+            if (ImGui::Button("Save Snapshot")) {
+                _naratte->saveSnapshot();
+            }
+            if (ImGui::Button("Load Snapshot")) {
+                _naratte->loadSnapshot();
+            }
+
 
             {
                 const char* letters[] = { "S", "s", "B", "A", "D", "U", "L", "R" };

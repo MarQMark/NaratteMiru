@@ -74,8 +74,6 @@ void AsmView::render() {
             _selected = (_selected + 1) % (int)_naratte->getInstructions().size();
         _jump_to = true;
     }
-    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_R))
-        _naratte->reload();
     if (ctrl && ImGui::IsKeyPressed(ImGuiKey_Q))
         _selected = -1;
 

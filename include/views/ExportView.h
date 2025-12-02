@@ -14,7 +14,7 @@ private:
     Naratte* _naratte{};
 
     std::string _path{};
-    std::string _name{};
+    std::string _name = "save.nm";
 };
 
 

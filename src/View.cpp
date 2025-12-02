@@ -102,8 +102,8 @@ void View::render_dockspace(){
         ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
     }
 
-    //bool show_demo_window = true;
-    //ImGui::ShowDemoWindow(&show_demo_window);
+    bool show_demo_window = true;
+    ImGui::ShowDemoWindow(&show_demo_window);
 
     for (const auto &val: _viewables | std::views::values) {
         if(val->isVisible())
