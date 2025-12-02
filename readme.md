@@ -20,13 +20,15 @@ For example, if joypad input is not needed, *Input* does not have to be implemen
 The only necessary function to be implemented is *Tick*.
 
 If the emulator's functions have different names then the default (which will probably be the case)
-a file called symbols.conf can be created and placed in the same directory as the NaratteMiru executable.
+a file called **symbols.conf** can be created and placed in the same directory as the NaratteMiru executable.
 The formatting is the following 
 ```
 Init: my_init_func_name
 Tick: my_tick_func_name
 ...
 ```
+
+To use the ROM menu, create a file called **roms.conf** in the same directory as the NaratteMiru executable and add the paths to the ROMs to it.
 
 ## Functions
 ### Init
