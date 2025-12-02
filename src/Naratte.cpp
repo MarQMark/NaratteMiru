@@ -189,7 +189,7 @@ void Naratte::update() {
     }
 }
 
-void Naratte::loadSnapshot() {
+void Naratte::loadSnapshot() const {
     if(!naratte_set_snapshot)
         return;
 
@@ -209,8 +209,6 @@ void Naratte::loadSnapshot() {
         free(buffer);
         return;
     }
-
-    printf("Load Size: %d\n", size);
 
     naratte_set_snapshot(_cpu, _mem, _ppu, static_cast<uint8_t*>(buffer), size);
 
@@ -240,8 +238,6 @@ void Naratte::saveSnapshot() const {
 
     if(buffer)
         free(buffer);
-
-    printf("Save Size: %d\n", size);
 }
 
 uint32_t* Naratte::getFB(const int buffer) const {

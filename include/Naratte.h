@@ -124,7 +124,7 @@ public:
     bool reloadLib();
     void update();
 
-    void loadSnapshot();
+    void loadSnapshot() const;
     void saveSnapshot() const;
 
     void rebuildCallStack();
