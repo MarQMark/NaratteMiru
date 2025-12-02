@@ -9,6 +9,9 @@ bool Util::WaitForStableFile(const std::string& path, const int retries) {
     namespace fs = std::filesystem;
     uintmax_t lastSize = 0;
 
+    if (!fs::exists(path))
+        return false;
+
     for (int i = 0; i < retries; i++) {
         const auto curSize = fs::file_size(path);
         if (curSize == lastSize && curSize != 0)
