@@ -67,7 +67,7 @@ void CartridgeInfoView::render() {
         ImGui::Dummy(ImVec2(0, 5));
 
         ImGui::Text("RAM size [0149]");
-        ImGui::Text("  %02X: %s", read_mem(0x0149), rom_size(read_mem(0x0149)));
+        ImGui::Text("  %02X: %s", read_mem(0x0149), ram_size(read_mem(0x0149)));
         ImGui::Dummy(ImVec2(0, 5));
 
         ImGui::Text("Destination code [014A]");
