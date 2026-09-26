@@ -4,10 +4,10 @@ project(NaratteMiru)
 set(CMAKE_CXX_STANDARD 20)
 
 # GLFW
-add_subdirectory(extern/glfw)
+add_subdirectory(external/glfw)
 
 # Dear ImGui
-set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui)
+set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui)
 set(IMGUI_SOURCES
         ${IMGUI_DIR}/imgui.cpp
         ${IMGUI_DIR}/imgui_draw.cpp

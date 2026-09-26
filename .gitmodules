@@ -1,9 +1,9 @@
 [submodule "extern/imgui"]
-	path = extern/imgui
+	path = external/imgui
 	url = https://github.com/ocornut/imgui
 	branch = docking
 [submodule "extern/glfw"]
-	path = extern/glfw
+	path = external/glfw
 	url = https://github.com/glfw/glfw
 [submodule "external/json"]
 	path = external/json
