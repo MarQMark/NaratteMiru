@@ -78,16 +78,17 @@ void SettingsView::render() {
 
 void SettingsView::setVisible(const bool visible) {
     if (!_visible && visible) {
-        _auto_reload = Config::get()->getAutoReload();
-        _lib_path = Config::get()->getLibPath();
-        _boot_path = Config::get()->getBootPath();
-        _game_path = Config::get()->getGamePath();
-        _endless_loop = Config::get()->isEndlessLoop();
-        _min_fr = Config::get()->getMinFR();
-        _speed_multi = Config::get()->getSpeedMulti();
-        _jp_as_call = Config::get()->getJPasCALL();
-        _jac_start = Config::get()->getJaCStart();
-        _jac_end = Config::get()->getJaCEnd();
+        _auto_reload = Config::get()->settings.autoReload.get();
+        _lib_path = Config::get()->settings.pathLib.get();
+        _boot_path = Config::get()->settings.pathBoot.get();
+        _game_path = Config::get()->settings.pathRom.get();
+        _endless_loop = Config::get()->settings.stopInfLoop.get();
+        // TODO: Fix
+        //_min_fr = Config::get()->getMinFR();
+        //_speed_multi = Config::get()->getSpeedMulti();
+        //_jp_as_call = Config::get()->getJPasCALL();
+        //_jac_start = Config::get()->getJaCStart();
+        //_jac_end = Config::get()->getJaCEnd();
     }
 
     Viewable::setVisible(visible);
@@ -216,18 +217,19 @@ void SettingsView::apply() {
     _dirty = false;
 
     const auto config = Config::get();
-    config->setAutoReload(_auto_reload);
-    config->setLibPath(_lib_path);
-    config->setBootPath(_boot_path);
-    config->setGamePath(_game_path);
+    config->settings.autoReload = _auto_reload;
+    config->settings.pathLib = _lib_path;
+    config->settings.pathBoot = _boot_path;
+    config->settings.pathRom = _game_path;
 
-    config->setEndlessLoop(_endless_loop);
-    config->setMinFR(_min_fr);
+    config->settings.stopInfLoop = _endless_loop;
+    // TODO: Fix
+    /*config->setMinFR(_min_fr);
     config->setSpeedMulti(_speed_multi);
 
     config->setJPasCALL(_jp_as_call);
     config->setJaCStart(_jac_start);
-    config->setJaCEnd(_jac_end);
+    config->setJaCEnd(_jac_end);*/
 
     config->save();
 }

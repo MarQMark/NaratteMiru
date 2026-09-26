@@ -7,8 +7,8 @@
 Config::Config() {
     load();
 
-    if (_auto_reload)
-        _last_modified = last_modified(_path_lib);
+    if (settings.autoReload)
+        _last_modified = last_modified(settings.pathLib.get());
 }
 
 Config* Config::s_instance = nullptr;
@@ -25,57 +25,38 @@ void Config::load() {
     if (!ifs)
         return;
 
-    std::getline(ifs, _path_lib);
-    std::getline(ifs, _path_boot);
-    std::getline(ifs, _path_game);
-    std::string var;
-    std::getline(ifs, var);
-    if(!var.empty()) {
-        try {
-            _auto_reload = std::stoi(var);
-        } catch (...) {}
+    try {
+        nlohmann::json j;
+        ifs >> j;
+
+        if (!j.is_object())
+            return;
+
+        if (j.contains("Settings") && j["Settings"].is_object()) {
+            const auto& s = j["Settings"];
+
+            if (s.contains("autoReload") && s["autoReload"].is_boolean())
+                settings.autoReload.load(s["autoReload"].get<bool>());
+            if (s.contains("pathLib") && s["pathLib"].is_string())
+                settings.pathLib.load(s["pathLib"].get<std::string>());
+            if (s.contains("pathBoot") && s["pathBoot"].is_string())
+                settings.pathBoot.load(s["pathBoot"].get<std::string>());
+            if (s.contains("pathRom") && s["pathRom"].is_string())
+                settings.pathRom.load(s["pathRom"].get<std::string>());
+            if (s.contains("stopInfLoop") && s["stopInfLoop"].is_boolean())
+                settings.stopInfLoop.load(s["stopInfLoop"].get<bool>());
+        }
+
+        if (j.contains("Properties") && j["Properties"].is_object()) {
+            const auto& p = j["Properties"];
+
+            if (p.contains("monitoring") && p["monitoring"].is_boolean())
+                properties.monitoring.load(p["monitoring"].get<bool>());
+        }
     }
-    std::getline(ifs, var);
-    if(!var.empty()) {
-        try {
-            _jp_as_call = std::stoi(var);
-        } catch (...) {}
-    }
-    std::getline(ifs, var);
-    if(!var.empty()) {
-        try {
-            _jac_start = std::stoi(var);
-        } catch (...) {}
-    }
-    std::getline(ifs, var);
-    if(!var.empty()) {
-        try {
-            _jac_end = std::stoi(var);
-        } catch (...) {}
-    }
-    std::getline(ifs, var);
-    if(!var.empty()) {
-        try {
-            _monitor = std::stoi(var);
-        } catch (...) {}
-    }
-    std::getline(ifs, var);
-    if(!var.empty()) {
-        try {
-            _endless_loop = std::stoi(var);
-        } catch (...) {}
-    }
-    std::getline(ifs, var);
-    if(!var.empty()) {
-        try {
-            _min_fr = std::stof(var);
-        } catch (...) {}
-    }
-    std::getline(ifs, var);
-    if(!var.empty()) {
-        try {
-            _speed_multi = std::stod(var);
-        } catch (...) {}
+    catch (const nlohmann::json::exception&) {
+        // Invalid JSON or an unexpected JSON error.
+        return;
     }
 }
 
@@ -84,138 +65,28 @@ void Config::save() const {
     if (!ofs)
         return;
 
-    ofs << _path_lib  << "\n";
-    ofs << _path_boot << "\n";
-    ofs << _path_game << "\n";
-    ofs << _auto_reload << "\n";
-    ofs << _jp_as_call << "\n";
-    ofs << _jac_start << "\n";
-    ofs << _jac_end << "\n";
-    ofs << _monitor << "\n";
-    ofs << _endless_loop << "\n";
-    ofs << _min_fr << "\n";
-    ofs << _speed_multi << "\n";
-}
+    nlohmann::json j;
+    j["Settings"] = {
+        {"autoReload", settings.autoReload},
+        {"pathLib", settings.pathLib},
+        {"pathBoot", settings.pathBoot},
+        {"pathRom", settings.pathRom},
+        {"stopInfLoop", settings.stopInfLoop}
+    };
 
-void Config::setAutoReload(const bool enable) {
-    _auto_reload = enable;
+    j["Properties"] = {
+        {"monitoring", properties.monitoring}
+    };
 
-    if (enable)
-        _last_modified = last_modified(_path_lib);
-}
-
-bool Config::getAutoReload() const {
-    return _auto_reload;
+    ofs << j.dump(4);
 }
 
 bool Config::libNaratteChanged() {
-    if (!_auto_reload)
+    if (!settings.autoReload)
         return false;
 
-    if (const auto lastModified = last_modified(_path_lib); _last_modified != lastModified) {
+    if (const auto lastModified = last_modified(settings.pathLib.get()); _last_modified != lastModified) {
         _last_modified = lastModified;
-        return true;
-    }
-
-    return false;
-}
-
-const std::string & Config::getLibPath() {
-    return _path_lib;
-}
-
-const std::string & Config::getBootPath() {
-    return _path_boot;
-}
-
-const std::string & Config::getGamePath() {
-    return _path_game;
-}
-
-void Config::setLibPath(const std::string &path) {
-    _path_lib = path;
-}
-
-void Config::setBootPath(const std::string &path) {
-    _path_boot = path;
-}
-
-void Config::setGamePath(const std::string &path) {
-    _path_game = path;
-}
-
-bool Config::getJPasCALL() const {
-    return _jp_as_call;
-}
-
-void Config::setJPasCALL(const bool enabled) {
-    _jp_as_call = enabled;
-    _dirty_cs = true;
-}
-
-int Config::getJaCStart() const {
-    return _jac_start;
-}
-
-int Config::getJaCEnd() const {
-    return _jac_end;
-}
-
-void Config::setJaCStart(const int start) {
-    _jac_start = start;
-    _dirty_cs = true;
-}
-
-void Config::setJaCEnd(const int end) {
-    _jac_end = end;
-    _dirty_cs = true;
-}
-
-bool Config::isJPasCall(const int id, const int max) const {
-    return _jp_as_call && id >= _jac_start && id <= (_jac_end < 0 ? max : _jac_end);
-}
-
-bool Config::isMonitored() const {
-    return _monitor;
-}
-
-void Config::setMonitored(const bool enable) {
-    if (enable != _monitor) {
-        _monitor = enable;
-        save();
-    }
-    else {
-        _monitor = enable;
-    }
-}
-
-bool Config::isEndlessLoop() const {
-    return _endless_loop;
-}
-
-void Config::setEndlessLoop(const bool enable) {
-    _endless_loop = enable;
-}
-
-float Config::getMinFR() const {
-    return _min_fr;
-}
-
-void Config::setMinFR(float min) {
-    _min_fr = min;
-}
-
-double Config::getSpeedMulti() const {
-    return _speed_multi;
-}
-
-void Config::setSpeedMulti(double multi) {
-    _speed_multi = multi;
-}
-
-bool Config::dirtyCallStack() {
-    if (_dirty_cs) {
-        _dirty_cs = false;
         return true;
     }
 

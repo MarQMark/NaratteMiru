@@ -75,8 +75,8 @@ bool Naratte::reloadLib() {
     if (_lib_handle)
         dlclose(_lib_handle);
 
-    if (Util::WaitForStableFile(Config::get()->getLibPath()))
-        _lib_handle = dlopen(Config::get()->getLibPath().c_str(), RTLD_LAZY);
+    if (Util::WaitForStableFile(Config::get()->settings.pathLib.get()))
+        _lib_handle = dlopen(Config::get()->settings.pathLib.get().c_str(), RTLD_LAZY);
     if (!_lib_handle) {
         fprintf(stderr, "Error: %s\n", dlerror());
         return false;
@@ -128,7 +128,11 @@ bool Naratte::reloadLib() {
     }
 
     if (naratte_load_rom) {
-        if(!naratte_load_rom(_mem, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
+        if(!naratte_load_rom(
+            _mem,
+            Config::get()->settings.pathBoot.get().c_str(),
+            Config::get()->settings.pathRom.get().c_str()))
+            {
             fprintf(stderr, "Error loading ROMs\n");
             return false;
         }
@@ -153,10 +157,11 @@ void Naratte::update() {
     // Calculate machine expected cycles
     auto now = std::chrono::steady_clock::now();
     double dt = std::chrono::duration<double>(now - _last_time).count();
-    dt = std::min(dt, 1. / Config::get()->getMinFR());
+    // TODO: Fix
+    dt = std::min(dt, 1. / 60);//Config::get()->getMinFR());
     _last_time = now;
 
-    double speed = Config::get()->getSpeedMulti();
+    double speed = 1;//Config::get()->getSpeedMulti();
     if(mem_read && _mem && (mem_read(_mem, 0xFF4C) & 0x80))
         speed *= 2;
 
@@ -168,7 +173,7 @@ void Naratte::update() {
             break;
         }
 
-        if (Config::get()->isMonitored()) {
+        if (Config::get()->properties.monitoring.get()) {
             if (naratte_get_ic) {
                 _instructions.emplace_back(Instruction{{0xDD, 0xDD, 0xDD, 0x0}});
                 naratte_get_ic(_cpu, _instructions.back().op);
@@ -181,7 +186,7 @@ void Naratte::update() {
             naratte_input(_cpu, Config::get()->Joypad);
         naratte_tick(_cpu, _mem, _ppu);
 
-        if (Config::get()->isMonitored() && naratte_get_mc) {
+        if (Config::get()->properties.monitoring.get() && naratte_get_mc) {
             for (const mem_change* change = naratte_get_mc(_mem); change != nullptr; change = change->next) {
                 _mem_writes.emplace_back(MemWrites{_instructions.size() - 1, change->addr, change->data});
             }
@@ -301,7 +306,11 @@ void Naratte::reloadPseudoMem(const size_t iId) {
     if (!naratte_init_pseudo_mem)
         return;
 
-    if (!naratte_init_pseudo_mem(&_pseudo_mem, Config::get()->getBootPath().c_str(), Config::get()->getGamePath().c_str())) {
+    if (!naratte_init_pseudo_mem(
+        &_pseudo_mem,
+        Config::get()->settings.pathBoot.get().c_str(),
+        Config::get()->settings.pathRom.get().c_str()))
+        {
         fprintf(stderr, "Error init pseudo ram\n");
         return;
     }
@@ -484,7 +493,7 @@ void Naratte::deserialize(const std::string &path) {
 }
 
 bool Naratte::is_inf_loop() const {
-    if (!Config::get()->isEndlessLoop())
+    if (!Config::get()->settings.stopInfLoop.get())
         return false;
 
     // JR -2
@@ -504,7 +513,7 @@ bool Naratte::is_inf_loop() const {
 }
 
 void Naratte::load_labels() {
-    std::filesystem::path p = Config::get()->getGamePath();
+    std::filesystem::path p = Config::get()->settings.pathRom.get();
     p.replace_extension(".sym");
     std::string symPath = p.string();
 
@@ -609,8 +618,9 @@ void Naratte::query_dl_error() {
 }
 
 void Naratte::add_last_call() {
+    // TODO: Fix
     if (const auto instruction = _instructions.back(); instruction.isCall() ||
-        (instruction.isJP() &&  Config::get()->isJPasCall(_instructions.size() - 1, _instructions.size() - 1)))
+        (instruction.isJP() /*&& Config::get()->isJPasCall(_instructions.size() - 1, _instructions.size() - 1)*/))
         _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, CALL});
     else if (instruction.isRet())
         _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, RET});
@@ -618,9 +628,10 @@ void Naratte::add_last_call() {
 
 void Naratte::rebuildCallStack() {
     _call_stack.clear();
+    // TODO: Fix
     for (int i = 0; i < _instructions.size(); i++) {
         if (const auto& instruction = _instructions[i]; instruction.isCall() ||
-           (instruction.isJP() &&  Config::get()->isJPasCall(i, _instructions.size() - 1)))
+           (instruction.isJP() /*&& Config::get()->isJPasCall(i, _instructions.size() - 1)*/))
             _call_stack.emplace_back(std::pair<int, int>{i, CALL});
         else if (instruction.isRet())
             _call_stack.emplace_back(std::pair<int, int>{i, RET});

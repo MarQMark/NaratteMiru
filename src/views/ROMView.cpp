@@ -25,7 +25,7 @@ void ROMView::render() {
         {
             if (ImGui::Selectable(_roms[i].c_str(), i == _selected)) {
                 if (_selected != i) {
-                    Config::get()->setGamePath(_roms[i]);
+                    Config::get()->settings.pathRom = _roms[i];
                     Config::get()->save();
                 }
 
@@ -33,7 +33,7 @@ void ROMView::render() {
             }
 
             if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-                Config::get()->setGamePath(_roms[i]);
+                Config::get()->settings.pathRom = _roms[i];
                 Config::get()->Reload = true;
                 Config::get()->save();
             }

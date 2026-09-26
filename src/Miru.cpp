@@ -49,8 +49,9 @@ void Miru::update() {
         Config::get()->Reload = false;
     }
 
-    if (Config::get()->dirtyCallStack())
-        _naratte->rebuildCallStack();
+    //TODO: Fix
+    //if (Config::get()->dirtyCallStack())
+    //    _naratte->rebuildCallStack();
 
     if(Config::get()->Ticks > 0 && !Config::get()->Pause) {
         _naratte->update();

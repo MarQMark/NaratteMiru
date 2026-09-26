@@ -277,7 +277,8 @@ bool AsmView::render_node(int& id, int depth) {
     if (end == id) {
 
         if (instructions[id].isCall() ||
-           (instructions[id].isJP() && Config::get()->isJPasCall(id, instructions.size() - 1))) {
+            // TODO: Fix
+           (instructions[id].isJP() /*&& Config::get()->isJPasCall(id, instructions.size() - 1)*/)) {
             if (_selected > id && _selected <= get_ret_from_call(id))
                 ImGui::SetNextItemOpen(true, ImGuiCond_Always);
 

@@ -3,8 +3,8 @@ project(NaratteMiru)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# GLFW
 add_subdirectory(external/glfw)
+add_subdirectory(external/json)
 
 # Dear ImGui
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui)
@@ -52,7 +52,7 @@ target_include_directories(NaratteMiru PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/disassembler
 )
-target_link_libraries(NaratteMiru PUBLIC imgui glfw)
+target_link_libraries(NaratteMiru PUBLIC imgui glfw nlohmann_json::nlohmann_json)
 
 # Linux: link OpenGL
 if(UNIX AND NOT APPLE)

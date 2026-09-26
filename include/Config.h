@@ -4,6 +4,7 @@
 #include <ctime>
 #include <string>
 
+#include "nlohmann/json.hpp"
 
 class Config {
 private:
@@ -16,63 +17,86 @@ public:
     void load();
     void save() const;
 
-    void setAutoReload(bool enable);
-    bool getAutoReload() const;
+private:
+    template<typename T>
+    class Tracked {
+    public:
+        using Setter = std::function<void(const T&)>;
+
+        explicit Tracked(bool& changed, T value = {}, Setter setter = {})
+            : _value(value), _changed(changed), _setter(setter) {}
+
+        Tracked& operator=(const T& value) {
+            if (_value != value) {
+                _value = value;
+                _changed = true;
+            }
+            if (_setter)
+                _setter(value);
+            return *this;
+        }
+
+        operator const T&() const {
+            return _value;
+        }
+        const T& get() const {
+            return _value;
+        }
+
+        void load(const T& value) {
+            _value = value;
+        }
+
+        friend void to_json(nlohmann::json& j, const Tracked& value) {
+            j = value._value;
+        }
+
+        friend void from_json(const nlohmann::json& j, Tracked& value) {
+            value.load(j.get<T>());
+        }
+
+
+    private:
+        T _value;
+        bool& _changed;
+        Setter _setter;
+    };
+
+public:
+    struct {
+        bool changed = false;
+
+        Tracked<bool> autoReload{changed, false,
+            [&](const bool enabled) {
+                if (enabled)
+                    get()->_last_modified = last_modified(get()->settings.pathLib.get());
+            }
+        };
+        Tracked<std::string> pathLib{changed};
+        Tracked<std::string> pathBoot{changed};
+        Tracked<std::string> pathRom{changed};
+
+        Tracked<bool> stopInfLoop{changed, false};
+    } settings;
+
+    struct {
+        bool changed = false;
+
+        Tracked<bool> monitoring{changed, false};
+
+    } properties;
+
     bool libNaratteChanged();
 
-    const std::string& getLibPath();
-    const std::string& getBootPath();
-    const std::string& getGamePath();
-
-    void setLibPath(const std::string& path);
-    void setBootPath(const std::string& path);
-    void setGamePath(const std::string& path);
-
-    bool getJPasCALL() const;
-    void setJPasCALL(bool enabled);
-    int getJaCStart() const;
-    int getJaCEnd() const;
-    void setJaCStart(int start);
-    void setJaCEnd(int end);
-    bool isJPasCall(int id, int max) const;
-
     int Ticks = 1000;
-
-    bool isMonitored() const;
-    void setMonitored(bool enable);
-
-    bool isEndlessLoop() const;
-    void setEndlessLoop(bool enable);
-
-    float getMinFR() const;
-    void setMinFR(float min);
-    double getSpeedMulti() const;
-    void setSpeedMulti(double multi);
 
     bool Pause = false;
     bool Reload = false;
 
-    bool dirtyCallStack();
-
     uint8_t Joypad = 0;
 
 private:
-    bool _auto_reload = false;
     std::time_t _last_modified;
-    std::string _path_lib{};
-    std::string _path_boot{};
-    std::string _path_game{};
-
-    bool _jp_as_call = false;
-    int _jac_start = 0;
-    int _jac_end = -1;
-    bool _dirty_cs = false;
-
-    bool _monitor = true;
-    double _endless_loop = true;
-    float _min_fr = 60;
-    double _speed_multi = 1;
-
     static std::time_t last_modified(const std::string& path);
 };
 

@@ -58,9 +58,9 @@ void Menubar::render() {
             }
 
             ImGui::Dummy(ImVec2(2, 0));
-            bool monitor = Config::get()->isMonitored();
+            bool monitor = Config::get()->properties.monitoring.get();
             ImGui::Checkbox("Monitor", &monitor);
-            Config::get()->setMonitored(monitor);
+            Config::get()->properties.monitoring = monitor;
 
             ImGui::Dummy(ImVec2(1, 0));
             ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);

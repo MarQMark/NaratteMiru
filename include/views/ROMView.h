@@ -16,6 +16,8 @@ private:
     void load_roms();
     std::vector<std::string> _roms{};
     int _selected = -1;
+
+    bool _show_path = true;
 };
 
 
