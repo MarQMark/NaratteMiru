@@ -35,12 +35,12 @@ void Menubar::render() {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("View")) {
-                add_menu_view("Assembly", &_asm_view);
-                add_menu_view("Memory", &_memory_view);
-                add_menu_view("Registers", &_register_view);
-                add_menu_view("Viewport", &_viewport_view);
-                add_menu_view("Tiles", &_tile_view);
-                add_menu_view("Roms", &_rom_view);
+                add_menu_view("Assembly");
+                add_menu_view("Memory");
+                add_menu_view("Registers");
+                add_menu_view("Viewport");
+                add_menu_view("Tiles");
+                add_menu_view("ROMs");
 
                 ImGui::EndMenu();
             }
@@ -126,7 +126,8 @@ void Menubar::render() {
     }
 }
 
-void Menubar::add_menu_view(const std::string &name, bool *enabled) const {
-    if(ImGui::MenuItem(name.c_str(), nullptr, enabled))
-        static_cast<View *>(view)->getViewable(name)->setVisible(*enabled);
+void Menubar::add_menu_view(const std::string &name) const {
+    bool enabled = Config::get()->properties.viewsVisible.contains(name) ? Config::get()->properties.viewsVisible.at(name) : false;
+    if(ImGui::MenuItem(name.c_str(), nullptr, &enabled))
+        static_cast<View *>(view)->getViewable(name)->setVisible(enabled);
 }

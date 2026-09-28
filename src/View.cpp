@@ -3,6 +3,7 @@
 #include <ranges>
 #include <stdexcept>
 
+#include "Config.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -105,9 +106,15 @@ void View::render_dockspace(){
     //bool show_demo_window = true;
     //ImGui::ShowDemoWindow(&show_demo_window);
 
-    for (const auto &val: _viewables | std::views::values) {
+    for (const auto [name, val]: _viewables ) {
         if(val->isVisible())
             val->render();
+
+        auto& viewsVisible = Config::get()->properties.viewsVisible;
+        if (viewsVisible.contains(name))
+            viewsVisible.at(name) = val->isVisible();
+        else
+            viewsVisible.emplace(name, Config::Tracked{Config::get()->settings.changed, true});
     }
 
     ImGui::End();
@@ -131,10 +138,15 @@ bool View::shouldRun() const {
     return !glfwWindowShouldClose(_window);
 }
 
-
 void View::addViewable(Viewable *viewable, const std::string& name) {
     _viewables[name] = viewable;
     viewable->view = this;
+
+    auto& viewsVisible = Config::get()->properties.viewsVisible;
+    if (viewsVisible.contains(name))
+        viewable->setVisible(viewsVisible.at(name));
+    else
+        viewsVisible.emplace(name, Config::Tracked{Config::get()->settings.changed, viewable->isVisible()});
 }
 
 Viewable *View::getViewable(const std::string& name) {

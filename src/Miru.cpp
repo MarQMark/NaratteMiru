@@ -42,18 +42,25 @@ Miru::~Miru() {
 }
 
 void Miru::update() {
-    if (Config::get()->Reload || Config::get()->libNaratteChanged()) {
-        Config::get()->load();
+    const auto config = Config::get();
+
+    if (config->Reload || config->libNaratteChanged()) {
+        config->load();
         _naratte->reload();
 
-        Config::get()->Reload = false;
+        config->Reload = false;
+    }
+
+    if (config->properties.changed) {
+        config->save();
+        config->properties.changed = false;
     }
 
     //TODO: Fix
-    //if (Config::get()->dirtyCallStack())
+    //if (config->dirtyCallStack())
     //    _naratte->rebuildCallStack();
 
-    if(Config::get()->Ticks > 0 && !Config::get()->Pause) {
+    if(config->Ticks > 0 && !config->Pause) {
         _naratte->update();
     }
 

@@ -53,7 +53,7 @@ Executes a single emulation tick
 Feeds joypad input into the CPU.
 Each bit represents a button state.
 
-###GetInstructionCache
+### GetInstructionCache
 ```void GetInstructionCache(void* cpu, uint8_t* ic)``` 
 
 Gets the CPU’s last executed instruction. ic[0-2]: opcode, ic[3] opcode length

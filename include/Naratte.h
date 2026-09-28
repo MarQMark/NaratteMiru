@@ -114,6 +114,11 @@ struct MemWrites {
     uint8_t  data = 0;
 };
 
+struct InstructionStack {
+    std::vector<Instruction> instructions{};
+    struct InstructionStack* next{};
+};
+
 class Naratte {
 public:
     Naratte();

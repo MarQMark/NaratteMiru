@@ -149,6 +149,18 @@ bool Naratte::reloadLib() {
 }
 
 void Naratte::update() {
+    if (!_success)
+        return;
+
+    _dirty = false;
+
+    constexpr auto steps = static_cast<uint32_t>(1/60.f * 4194304);
+    for(int i = 0; i < steps; i++) {
+
+    }
+}
+
+/*void Naratte::update() {
     if(!_success)
         return;
 
@@ -192,7 +204,7 @@ void Naratte::update() {
             }
         }
     }
-}
+}*/
 
 void Naratte::loadSnapshot() const {
     if(!naratte_set_snapshot)

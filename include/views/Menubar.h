@@ -15,14 +15,7 @@ public:
 private:
     Naratte* _naratte{};
 
-    bool _asm_view = true;
-    bool _memory_view = true;
-    bool _register_view = true;
-    bool _viewport_view = true;
-    bool _tile_view = true;
-    bool _rom_view = true;
-
-    void add_menu_view(const std::string& name, bool* enabled) const;
+    void add_menu_view(const std::string& name) const;
 };
 
 

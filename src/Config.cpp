@@ -52,6 +52,17 @@ void Config::load() {
 
             if (p.contains("monitoring") && p["monitoring"].is_boolean())
                 properties.monitoring.load(p["monitoring"].get<bool>());
+
+            if (p.contains("viewsVisible") && p["viewsVisible"].is_object()) {
+                for (const auto& [name, value] : p["viewsVisible"].items()) {
+                    if (value.is_boolean()) {
+                        properties.viewsVisible.emplace(
+                            name,
+                            Tracked<bool>{properties.changed, value.get<bool>()}
+                        );
+                    }
+                }
+            }
         }
     }
     catch (const nlohmann::json::exception&) {
@@ -75,7 +86,8 @@ void Config::save() const {
     };
 
     j["Properties"] = {
-        {"monitoring", properties.monitoring}
+        {"monitoring", properties.monitoring},
+        {"viewsVisible", properties.viewsVisible}
     };
 
     ofs << j.dump(4);

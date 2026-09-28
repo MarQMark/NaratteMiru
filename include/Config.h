@@ -17,14 +17,15 @@ public:
     void load();
     void save() const;
 
-private:
     template<typename T>
     class Tracked {
     public:
         using Setter = std::function<void(const T&)>;
 
         explicit Tracked(bool& changed, T value = {}, Setter setter = {})
-            : _value(value), _changed(changed), _setter(setter) {}
+            : _value(value), _changed(changed), _setter(setter) {
+            _changed = true;
+        }
 
         Tracked& operator=(const T& value) {
             if (_value != value) {
@@ -62,7 +63,6 @@ private:
         Setter _setter;
     };
 
-public:
     struct {
         bool changed = false;
 
@@ -84,6 +84,7 @@ public:
 
         Tracked<bool> monitoring{changed, false};
 
+        std::map<std::string, Tracked<bool>> viewsVisible;
     } properties;
 
     bool libNaratteChanged();
