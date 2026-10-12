@@ -148,7 +148,7 @@ bool Naratte::reloadLib() {
     return true;
 }
 
-void Naratte::update() {
+/*void Naratte::update() {
     if (!_success)
         return;
 
@@ -158,9 +158,9 @@ void Naratte::update() {
     for(int i = 0; i < steps; i++) {
 
     }
-}
+}*/
 
-/*void Naratte::update() {
+void Naratte::update() {
     if(!_success)
         return;
 
@@ -169,8 +169,7 @@ void Naratte::update() {
     // Calculate machine expected cycles
     auto now = std::chrono::steady_clock::now();
     double dt = std::chrono::duration<double>(now - _last_time).count();
-    // TODO: Fix
-    dt = std::min(dt, 1. / 60);//Config::get()->getMinFR());
+    dt = std::min(dt, 1. / Config::get()->settings.minFr);
     _last_time = now;
 
     double speed = 1;//Config::get()->getSpeedMulti();
@@ -204,7 +203,7 @@ void Naratte::update() {
             }
         }
     }
-}*/
+}
 
 void Naratte::loadSnapshot() const {
     if(!naratte_set_snapshot)
@@ -396,7 +395,6 @@ void Naratte::setSelected(const int selected) {
 
     if (selected != _selected) {
         reloadPseudoMem(selected);
-        // TODO: fix
         //if (ppu_draw)
         //    ppu_draw(_ppu, _pseudo_mem);
         _dirty = true;
@@ -630,9 +628,8 @@ void Naratte::query_dl_error() {
 }
 
 void Naratte::add_last_call() {
-    // TODO: Fix
     if (const auto instruction = _instructions.back(); instruction.isCall() ||
-        (instruction.isJP() /*&& Config::get()->isJPasCall(_instructions.size() - 1, _instructions.size() - 1)*/))
+        (instruction.isJP() && Config::get()->isJPasCall(_instructions.size() - 1, _instructions.size() - 1)))
         _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, CALL});
     else if (instruction.isRet())
         _call_stack.emplace_back(std::pair<int, int>{_instructions.size() - 1, RET});
@@ -640,10 +637,9 @@ void Naratte::add_last_call() {
 
 void Naratte::rebuildCallStack() {
     _call_stack.clear();
-    // TODO: Fix
     for (int i = 0; i < _instructions.size(); i++) {
         if (const auto& instruction = _instructions[i]; instruction.isCall() ||
-           (instruction.isJP() /*&& Config::get()->isJPasCall(i, _instructions.size() - 1)*/))
+           (instruction.isJP() && Config::get()->isJPasCall(i, _instructions.size() - 1)))
             _call_stack.emplace_back(std::pair<int, int>{i, CALL});
         else if (instruction.isRet())
             _call_stack.emplace_back(std::pair<int, int>{i, RET});

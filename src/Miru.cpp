@@ -56,9 +56,8 @@ void Miru::update() {
         config->properties.changed = false;
     }
 
-    //TODO: Fix
-    //if (config->dirtyCallStack())
-    //    _naratte->rebuildCallStack();
+    if (config->dirtyCallStack())
+        _naratte->rebuildCallStack();
 
     if(config->Ticks > 0 && !config->Pause) {
         _naratte->update();

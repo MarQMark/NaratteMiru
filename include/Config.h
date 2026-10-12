@@ -77,6 +77,14 @@ public:
         Tracked<std::string> pathRom{changed};
 
         Tracked<bool> stopInfLoop{changed, false};
+
+        Tracked<float> minFr{changed, 60};
+        Tracked<double> speedMulti{changed, 1};
+
+        Tracked<bool> jpAsCall{changed, false};
+        Tracked<int> jacStart{changed, 0};
+        Tracked<int> jacEnd{changed, -1};
+        Tracked<bool> dirtyCs{changed, false};
     } settings;
 
     struct {
@@ -88,6 +96,10 @@ public:
     } properties;
 
     bool libNaratteChanged();
+
+    bool isJPasCall(const int id, const int max) const;
+
+    bool dirtyCallStack();
 
     int Ticks = 1000;
 

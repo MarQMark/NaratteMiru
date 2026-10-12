@@ -83,12 +83,11 @@ void SettingsView::setVisible(const bool visible) {
         _boot_path = Config::get()->settings.pathBoot.get();
         _game_path = Config::get()->settings.pathRom.get();
         _endless_loop = Config::get()->settings.stopInfLoop.get();
-        // TODO: Fix
-        //_min_fr = Config::get()->getMinFR();
-        //_speed_multi = Config::get()->getSpeedMulti();
-        //_jp_as_call = Config::get()->getJPasCALL();
-        //_jac_start = Config::get()->getJaCStart();
-        //_jac_end = Config::get()->getJaCEnd();
+        _min_fr = Config::get()->settings.minFr;
+        _speed_multi = Config::get()->settings.speedMulti;
+        _jp_as_call = Config::get()->settings.jpAsCall;
+        _jac_start = Config::get()->settings.jacStart;
+        _jac_end = Config::get()->settings.jacEnd;
     }
 
     Viewable::setVisible(visible);
@@ -223,13 +222,12 @@ void SettingsView::apply() {
     config->settings.pathRom = _game_path;
 
     config->settings.stopInfLoop = _endless_loop;
-    // TODO: Fix
-    /*config->setMinFR(_min_fr);
-    config->setSpeedMulti(_speed_multi);
+    config->settings.minFr = _min_fr;
+    config->settings.speedMulti = _speed_multi;
 
-    config->setJPasCALL(_jp_as_call);
-    config->setJaCStart(_jac_start);
-    config->setJaCEnd(_jac_end);*/
+    config->settings.jpAsCall = _jp_as_call;
+    config->settings.jacStart = _jac_start;
+    config->settings.jacEnd = _jac_end;
 
     config->save();
 }

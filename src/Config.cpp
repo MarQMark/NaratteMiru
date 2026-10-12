@@ -45,6 +45,19 @@ void Config::load() {
                 settings.pathRom.load(s["pathRom"].get<std::string>());
             if (s.contains("stopInfLoop") && s["stopInfLoop"].is_boolean())
                 settings.stopInfLoop.load(s["stopInfLoop"].get<bool>());
+
+            if (s.contains("minFr") && s["minFr"].is_number_float())
+                settings.minFr.load(s["minFr"].get<float>());
+            if (s.contains("speedMulti") && s["speedMulti"].is_number_float())
+                settings.speedMulti.load(s["speedMulti"].get<double>());
+            if (s.contains("jpAsCall") && s["jpAsCall"].is_boolean())
+                settings.jpAsCall.load(s["jpAsCall"].get<bool>());
+            if (s.contains("jacStart") && s["jacStart"].is_number_integer())
+                settings.jacStart.load(s["jacStart"].get<int>());
+            if (s.contains("jacEnd") && s["jacEnd"].is_number_integer())
+                settings.jacEnd.load(s["jacEnd"].get<int>());
+            if (s.contains("dirtyCs") && s["dirtyCs"].is_boolean())
+                settings.dirtyCs.load(s["dirtyCs"].get<bool>());
         }
 
         if (j.contains("Properties") && j["Properties"].is_object()) {
@@ -82,7 +95,14 @@ void Config::save() const {
         {"pathLib", settings.pathLib},
         {"pathBoot", settings.pathBoot},
         {"pathRom", settings.pathRom},
-        {"stopInfLoop", settings.stopInfLoop}
+        {"stopInfLoop", settings.stopInfLoop},
+
+        {"minFr", settings.minFr},
+        {"speedMulti", settings.speedMulti},
+        {"jpAsCall", settings.jpAsCall},
+        {"jacStart", settings.jacStart},
+        {"jacEnd", settings.jacEnd},
+        {"dirtyCs", settings.dirtyCs}
     };
 
     j["Properties"] = {
@@ -99,6 +119,19 @@ bool Config::libNaratteChanged() {
 
     if (const auto lastModified = last_modified(settings.pathLib.get()); _last_modified != lastModified) {
         _last_modified = lastModified;
+        return true;
+    }
+
+    return false;
+}
+
+bool Config::isJPasCall(const int id, const int max) const {
+    return settings.jpAsCall && id >= settings.jacStart && id <= (settings.jacEnd < 0 ? max : settings.jacEnd);
+}
+
+bool Config::dirtyCallStack() {
+    if (settings.dirtyCs) {
+        settings.dirtyCs = false;
         return true;
     }
 
