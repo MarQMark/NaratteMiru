@@ -7,12 +7,13 @@
 
 class Application {
 public:
-    Application() = default;
+    Application();
 
     void update();
 
 private:
     std::unique_ptr<View> _view{};
+    std::unique_ptr<Window> _window{};
 };
 
 

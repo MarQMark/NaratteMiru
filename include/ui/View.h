@@ -1,12 +1,17 @@
 #ifndef NARRATEMIRU_VIEW_H
 #define NARRATEMIRU_VIEW_H
+#include "Window.h"
 
 
 class View {
 public:
-    View() = default;
+    explicit View(const Window& window);
+    ~View() = default;
 
     void update();
+
+private:
+    void render_menubar();
 };
 
 
